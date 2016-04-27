@@ -1,5 +1,13 @@
 pub mod sys;
 
+pub struct DrawCommand {
+    _priv: ()
+}
+
+pub struct DrawList {
+    _priv: ()
+}
+
 impl From<bool> for sys::Enum_Unnamed1 {
     fn from(b: bool) -> Self {
         if b {
@@ -157,4 +165,28 @@ impl Into<sys::Struct_nk_recti> for Recti {
     }
 }
 
-pub type Handle = ::std::os::raw::c_void;
+pub type Glyph = [::std::os::raw::c_char; 4];
+pub enum Handle {
+    Ptr(*mut u8),
+    Id(i32)
+}
+
+impl From<sys::nk_handle> for Handle {
+    fn from(raw_handle: nk_handle) -> Handle {
+        unimplemented!()
+    }
+}
+
+impl Into<sys::nk_handle> for Handle {
+    fn into(self) -> Handle {
+        unimplemented!()
+    }
+}
+
+#[derive(Default)]
+pub struct Image {
+    pub handle: *mut Handle,
+    pub w: u16,
+    pub h: u16,
+    pub region: [u16; 4]
+}
