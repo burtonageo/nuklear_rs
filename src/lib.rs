@@ -165,27 +165,29 @@ impl Into<sys::Struct_nk_recti> for Recti {
     }
 }
 
-pub type Glyph = [::std::os::raw::c_char; 4];
 pub enum Handle {
-    Ptr(*mut u8),
+    Ptr(*mut std::os::raw::c_void),
     Id(i32)
 }
 
-impl From<sys::nk_handle> for Handle {
-    fn from(raw_handle: nk_handle) -> Handle {
-        unimplemented!()
+impl Default for Handle {
+    fn default() -> Self {
+        Handle::Id(0)
     }
 }
 
 impl Into<sys::nk_handle> for Handle {
-    fn into(self) -> Handle {
-        unimplemented!()
+    fn into(self) -> sys::nk_handle {
+        match self {
+            Handle::Ptr(ptr) => unsafe { sys::nk_handle_ptr(ptr) },
+            Handle::Id(id) => unsafe { sys::nk_handle_id(id) }
+        }
     }
 }
 
 #[derive(Default)]
 pub struct Image {
-    pub handle: *mut Handle,
+    pub handle: Handle,
     pub w: u16,
     pub h: u16,
     pub region: [u16; 4]
