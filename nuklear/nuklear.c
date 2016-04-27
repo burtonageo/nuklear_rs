@@ -1,3 +1,5 @@
 #define NK_IMPLEMENTATION
 #define NK_INCLUDE_FIXED_TYPES
+#define NK_INCLUDE_DEFAULT_ALLOCATOR
+#define NK_INCLUDE_STANDARD_IO
 #include "nuklear.h"
