@@ -1,3 +1,7 @@
+#![feature(alloc, heap_api)]
+
+extern crate alloc;
+
 pub mod sys;
 
 pub struct DrawCommand {
@@ -562,3 +566,68 @@ impl Into<sys::Enum_nk_anti_aliasing> for AntiAliasing {
         }
     }
 }
+
+pub struct Allocator {
+    pub allocate: unsafe fn (data: &mut Handle, ptr: *mut std::os::raw::c_void, size: usize)
+                             -> *mut std::os::raw::c_void,
+    pub free: unsafe fn (data: &mut Handle, ptr: *mut std::os::raw::c_void),
+    pub data: Handle
+}
+
+fn rust_allocator() -> Allocator {
+    unsafe fn allocate(data: &mut Handle, ptr: *mut std::os::raw::c_void, size: usize)
+                       -> *mut std::os::raw::c_void {
+        use alloc::heap;
+        if let Handle::Id(ref mut allocated) = *data {
+            let allocation = heap::reallocate(ptr as *mut u8, (*allocated) as usize, size, 4);
+            *allocated = size as i32;
+            allocation as *mut _
+        } else {
+            std::ptr::null_mut()
+        }
+    }
+
+    unsafe fn free(data: &mut Handle, ptr: *mut std::os::raw::c_void) {
+        use alloc::heap;
+        if let Handle::Id(ref mut allocated) = *data {
+            heap::deallocate(ptr as *mut u8, (*allocated) as usize, 4)
+        }
+    }
+
+    // The user data of the rust allocator will store the number of bytes currently allocated
+    let data = Handle::default();
+
+    Allocator {
+        allocate: allocate,
+        free: free,
+        data: data
+    }
+}
+/*
+impl Into<sys::Struct_nk_allocator> for Allocator {
+    fn into(self) -> sys::Struct_nk_allocator {
+        use std::os::raw::c_void;
+        use std::mem;
+        unsafe extern "C" fn extern_alloc(
+            mut data: sys::nk_handle, ptr: *mut c_void, size: sys::nk_size
+            ) -> *mut c_void {
+            let mut _self: *mut A = mem::transmute(data);
+            (*_self).allocate(ptr, size as usize)
+        }
+
+        unsafe extern "C" fn extern_free(mut data: sys::nk_handle, ptr: *mut c_void) {
+            let mut _self: *mut A = mem::transmute(data);
+            (*_self).free(ptr)
+        }
+
+        let alloc_data = Handle::Ptr(self as *mut _);
+
+        let mut raw_allocator = sys::Struct_nk_allocator::default();
+
+        raw_allocator.userdata = alloc_data.into();
+        raw_allocator.alloc = extern_alloc;
+        raw_allocator.free = extern_free;
+
+        raw_allocator
+    }
+}*/
