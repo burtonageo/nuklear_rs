@@ -203,3 +203,27 @@ impl Into<sys::Struct_nk_image> for Image {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct Scroll {
+    pub x: u16,
+    pub y: u16
+}
+
+impl From<sys::Struct_nk_scroll> for Scroll {
+    fn from(raw_vec: sys::Struct_nk_scroll) -> Self {
+        Scroll {
+            x: raw_vec.x,
+            y: raw_vec.y
+        }
+    }
+}
+
+impl Into<sys::Struct_nk_scroll> for Scroll {
+    fn into(self) -> sys::Struct_nk_scroll {
+        sys::Struct_nk_scroll {
+            x: self.x,
+            y: self.y
+        }
+    }
+}
