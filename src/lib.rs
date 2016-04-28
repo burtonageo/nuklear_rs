@@ -4,6 +4,8 @@ extern crate alloc;
 
 pub mod sys;
 
+use std::os::raw::c_void;
+
 pub struct DrawCommand {
     _priv: ()
 }
@@ -171,7 +173,7 @@ impl Into<sys::Struct_nk_recti> for Recti {
 
 #[derive(Debug, Eq, PartialEq)]
 pub enum Handle {
-    Ptr(*mut std::os::raw::c_void),
+    Ptr(*mut c_void),
     Id(i32)
 }
 
@@ -570,17 +572,15 @@ impl Into<sys::Enum_nk_anti_aliasing> for AntiAliasing {
 
 fn rust_allocator() -> sys::Struct_nk_allocator {
     use alloc::heap;
-    unsafe extern "C" fn allocate(mut data: sys::nk_handle,
-                                  ptr: *mut std::os::raw::c_void,
-                                  size: sys::nk_size)
-                                  -> *mut std::os::raw::c_void {
+    unsafe extern "C" fn allocate(mut data: sys::nk_handle, ptr: *mut c_void, size: sys::nk_size)
+                                  -> *mut c_void {
         let alloc_data = data.ptr() as *mut usize;
         let allocation = heap::reallocate(ptr as *mut u8, *alloc_data as usize, size as usize, 4);
         *alloc_data = size as usize;
         allocation as *mut _
     }
 
-    unsafe extern "C" fn free(mut data: sys::nk_handle, ptr: *mut std::os::raw::c_void) {
+    unsafe extern "C" fn free(mut data: sys::nk_handle, ptr: *mut c_void) {
         let allocated = *(data.ptr() as *mut usize);
         heap::deallocate(ptr as *mut u8, allocated as usize, 4)
     }
