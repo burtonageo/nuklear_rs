@@ -259,3 +259,306 @@ impl Into<sys::Enum_nk_heading> for Heading {
         }
     }
 }
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ButtonBehavior {
+    Default = 0,
+    Repeater = 1
+}
+
+impl From<sys::Enum_nk_button_behavior> for ButtonBehavior {
+    fn from(raw_button_behavior: sys::Enum_nk_button_behavior) -> Self {
+        match raw_button_behavior {
+            sys::Enum_nk_button_behavior::NK_BUTTON_DEFAULT => ButtonBehavior::Default,
+            sys::Enum_nk_button_behavior::NK_BUTTON_REPEATER => ButtonBehavior::Repeater
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_button_behavior> for ButtonBehavior {
+    fn into(self) -> sys::Enum_nk_button_behavior {
+        match self {
+            ButtonBehavior::Default => sys::Enum_nk_button_behavior::NK_BUTTON_DEFAULT,
+            ButtonBehavior::Repeater => sys::Enum_nk_button_behavior::NK_BUTTON_REPEATER,
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Modify {
+    Fixed = 0,
+    Modifiable = 1
+}
+
+impl From<sys::Enum_nk_modify> for Modify {
+    fn from(raw_modify: sys::Enum_nk_modify) -> Self {
+        match raw_modify {
+            sys::Enum_nk_modify::NK_FIXED => Modify::Fixed,
+            sys::Enum_nk_modify::NK_MODIFIABLE => Modify::Modifiable
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_modify> for Modify {
+    fn into(self) -> sys::Enum_nk_modify {
+        match self {
+            Modify::Fixed => sys::Enum_nk_modify::NK_FIXED,
+            Modify::Modifiable => sys::Enum_nk_modify::NK_MODIFIABLE
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Orientation {
+    Vertical = 0,
+    Horizontal = 1
+}
+
+impl From<sys::Enum_nk_orientation> for Orientation {
+    fn from(raw_modify: sys::Enum_nk_orientation) -> Self {
+        match raw_modify {
+            sys::Enum_nk_orientation::NK_VERTICAL => Orientation::Vertical,
+            sys::Enum_nk_orientation::NK_HORIZONTAL => Orientation::Horizontal
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_orientation> for Orientation {
+    fn into(self) -> sys::Enum_nk_orientation {
+        match self {
+            Orientation::Vertical => sys::Enum_nk_orientation::NK_VERTICAL,
+            Orientation::Horizontal => sys::Enum_nk_orientation::NK_HORIZONTAL
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum CollapseState {
+    Minimized = 0,
+    Maximized = 1
+}
+
+impl From<sys::Enum_nk_collapse_states> for CollapseState {
+    fn from(raw_modify: sys::Enum_nk_collapse_states) -> Self {
+        match raw_modify {
+            sys::Enum_nk_collapse_states::NK_MINIMIZED => CollapseState::Minimized,
+            sys::Enum_nk_collapse_states::NK_MAXIMIZED => CollapseState::Maximized
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_collapse_states> for CollapseState {
+    fn into(self) -> sys::Enum_nk_collapse_states {
+        match self {
+            CollapseState::Minimized => sys::Enum_nk_collapse_states::NK_MINIMIZED,
+            CollapseState::Maximized => sys::Enum_nk_collapse_states::NK_MAXIMIZED
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ShowState {
+    Hidden = 0,
+    Shown = 1
+}
+
+impl From<sys::Enum_nk_show_states> for ShowState {
+    fn from(raw_show_state: sys::Enum_nk_show_states) -> Self {
+        match raw_show_state {
+            sys::Enum_nk_show_states::NK_HIDDEN => ShowState::Hidden,
+            sys::Enum_nk_show_states::NK_SHOWN => ShowState::Shown
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_show_states> for ShowState {
+    fn into(self) -> sys::Enum_nk_show_states {
+        match self {
+            ShowState::Hidden => sys::Enum_nk_show_states::NK_HIDDEN,
+            ShowState::Shown => sys::Enum_nk_show_states::NK_SHOWN
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ChartType {
+    Lines,
+    Column,
+    Max
+}
+
+impl From<sys::Enum_nk_chart_type> for ChartType {
+    fn from(raw_chart_type: sys::Enum_nk_chart_type) -> Self {
+        match raw_chart_type {
+            sys::Enum_nk_chart_type::NK_CHART_LINES => ChartType::Lines,
+            sys::Enum_nk_chart_type::NK_CHART_COLUMN => ChartType::Column,
+            sys::Enum_nk_chart_type::NK_CHART_MAX => ChartType::Max
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_chart_type> for ChartType {
+    fn into(self) -> sys::Enum_nk_chart_type {
+        match self {
+            ChartType::Lines => sys::Enum_nk_chart_type::NK_CHART_LINES,
+            ChartType::Column => sys::Enum_nk_chart_type::NK_CHART_COLUMN,
+            ChartType::Max => sys::Enum_nk_chart_type::NK_CHART_MAX
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ChartEvent {
+    Hovering = 1,
+    Clicked = 2
+}
+
+impl From<sys::Enum_nk_chart_event> for ChartEvent {
+    fn from(raw_show_state: sys::Enum_nk_chart_event) -> Self {
+        match raw_show_state {
+            sys::Enum_nk_chart_event::NK_CHART_HOVERING => ChartEvent::Hovering,
+            sys::Enum_nk_chart_event::NK_CHART_CLICKED => ChartEvent::Clicked
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_chart_event> for ChartEvent {
+    fn into(self) -> sys::Enum_nk_chart_event {
+        match self {
+            ChartEvent::Hovering => sys::Enum_nk_chart_event::NK_CHART_HOVERING,
+            ChartEvent::Clicked => sys::Enum_nk_chart_event::NK_CHART_CLICKED
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ColorFormat {
+    Rgb = 0,
+    Rgba = 1
+}
+
+impl From<sys::Enum_nk_color_format> for ColorFormat {
+    fn from(raw_color_format: sys::Enum_nk_color_format) -> Self {
+        match raw_color_format {
+            sys::Enum_nk_color_format::NK_RGB => ColorFormat::Rgb,
+            sys::Enum_nk_color_format::NK_RGBA => ColorFormat::Rgba
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_color_format> for ColorFormat {
+    fn into(self) -> sys::Enum_nk_color_format {
+        match self {
+            ColorFormat::Rgb => sys::Enum_nk_color_format::NK_RGB,
+            ColorFormat::Rgba => sys::Enum_nk_color_format::NK_RGBA
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PopupType {
+    Dynamic = 0,
+    Static = 1
+}
+
+impl From<sys::Enum_nk_popup_type> for PopupType {
+    fn from(raw_popup_type: sys::Enum_nk_popup_type) -> Self {
+        match raw_popup_type {
+            sys::Enum_nk_popup_type::NK_POPUP_DYNAMIC => PopupType::Dynamic,
+            sys::Enum_nk_popup_type::NK_POPUP_STATIC => PopupType::Static
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_popup_type> for PopupType {
+    fn into(self) -> sys::Enum_nk_popup_type {
+        match self {
+            PopupType::Dynamic => sys::Enum_nk_popup_type::NK_POPUP_DYNAMIC,
+            PopupType::Static => sys::Enum_nk_popup_type::NK_POPUP_STATIC
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum LayoutFormat {
+    Dynamic = 0,
+    Static = 1
+}
+
+impl From<sys::Enum_nk_layout_format> for LayoutFormat {
+    fn from(raw_layout_format: sys::Enum_nk_layout_format) -> Self {
+        match raw_layout_format {
+            sys::Enum_nk_layout_format::NK_DYNAMIC => LayoutFormat::Dynamic,
+            sys::Enum_nk_layout_format::NK_STATIC => LayoutFormat::Static
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_layout_format> for LayoutFormat {
+    fn into(self) -> sys::Enum_nk_layout_format {
+        match self {
+            LayoutFormat::Dynamic => sys::Enum_nk_layout_format::NK_DYNAMIC,
+            LayoutFormat::Static => sys::Enum_nk_layout_format::NK_STATIC
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TreeType {
+    Node = 0,
+    Tab = 1
+}
+
+impl From<sys::Enum_nk_tree_type> for TreeType {
+    fn from(raw_layout_format: sys::Enum_nk_tree_type) -> Self {
+        match raw_layout_format {
+            sys::Enum_nk_tree_type::NK_TREE_NODE => TreeType::Node,
+            sys::Enum_nk_tree_type::NK_TREE_TAB => TreeType::Tab
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_tree_type> for TreeType {
+    fn into(self) -> sys::Enum_nk_tree_type {
+        match self {
+            TreeType::Node => sys::Enum_nk_tree_type::NK_TREE_NODE,
+            TreeType::Tab => sys::Enum_nk_tree_type::NK_TREE_TAB
+        }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum AntiAliasing {
+    Off = 0,
+    On = 1
+}
+
+impl From<sys::Enum_nk_anti_aliasing> for AntiAliasing {
+    fn from(raw_layout_format: sys::Enum_nk_anti_aliasing) -> Self {
+        match raw_layout_format {
+            sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_OFF => AntiAliasing::Off,
+            sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_ON => AntiAliasing::On
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_anti_aliasing> for AntiAliasing {
+    fn into(self) -> sys::Enum_nk_anti_aliasing {
+        match self {
+            AntiAliasing::Off => sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_OFF,
+            AntiAliasing::On => sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_ON
+        }
+    }
+}
