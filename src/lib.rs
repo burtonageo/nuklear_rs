@@ -192,3 +192,14 @@ pub struct Image {
     pub h: u16,
     pub region: [u16; 4]
 }
+
+impl Into<sys::Struct_nk_image> for Image {
+    fn into(self) -> sys::Struct_nk_image {
+        sys::Struct_nk_image {
+            handle: self.handle.into(),
+            w: self.w,
+            h: self.h,
+            region: self.region
+        }
+    }
+}
