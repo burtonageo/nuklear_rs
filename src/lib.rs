@@ -228,3 +228,34 @@ impl Into<sys::Struct_nk_scroll> for Scroll {
         }
     }
 }
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Heading {
+    Up = 0,
+    Down = 1,
+    Right = 2,
+    Left = 3
+}
+
+impl From<sys::Enum_nk_heading> for Heading {
+    fn from(raw_heading: sys::Enum_nk_heading) -> Self {
+        match raw_heading {
+            sys::Enum_nk_heading::NK_UP => Heading::Up,
+            sys::Enum_nk_heading::NK_RIGHT => Heading::Down,
+            sys::Enum_nk_heading::NK_DOWN => Heading::Right,
+            sys::Enum_nk_heading::NK_LEFT => Heading::Left
+        }
+    }
+}
+
+impl Into<sys::Enum_nk_heading> for Heading {
+    fn into(self) -> sys::Enum_nk_heading {
+        match self {
+            Heading::Up => sys::Enum_nk_heading::NK_UP,
+            Heading::Down => sys::Enum_nk_heading::NK_RIGHT,
+            Heading::Right => sys::Enum_nk_heading::NK_DOWN,
+            Heading::Left => sys::Enum_nk_heading::NK_LEFT
+        }
+    }
+}
