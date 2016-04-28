@@ -27,7 +27,7 @@ impl Into<bool> for sys::Enum_Unnamed1 {
     }
 }
 
-#[derive(Clone, Copy, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -57,7 +57,7 @@ impl Into<sys::Struct_nk_color> for Color {
     }
 }
 
-#[derive(Clone, Copy, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
     pub y: f32
@@ -81,7 +81,7 @@ impl Into<sys::Struct_nk_vec2> for Vec2 {
     }
 }
 
-#[derive(Clone, Copy, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Vec2i {
     pub x: i16,
     pub y: i16
@@ -105,7 +105,7 @@ impl Into<sys::Struct_nk_vec2i> for Vec2i {
     }
 }
 
-#[derive(Clone, Copy, Default, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Rect {
     pub x: f32,
     pub y: f32,
@@ -135,7 +135,7 @@ impl Into<sys::Struct_nk_rect> for Rect {
     }
 }
 
-#[derive(Clone, Copy, Default, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Recti {
     pub x: i16,
     pub y: i16,
@@ -165,6 +165,7 @@ impl Into<sys::Struct_nk_recti> for Recti {
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum Handle {
     Ptr(*mut std::os::raw::c_void),
     Id(i32)
