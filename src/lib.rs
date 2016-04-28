@@ -1,5 +1,6 @@
-#![feature(alloc, heap_api)]
+#![cfg_attr(feature = "rust_allocator", feature(alloc, heap_api))]
 
+#[cfg(feature = "rust_allocator")]
 extern crate alloc;
 
 pub mod sys;
@@ -569,7 +570,7 @@ impl Into<sys::Enum_nk_anti_aliasing> for AntiAliasing {
     }
 }
 
-
+#[cfg(feature = "rust_allocator")]
 fn rust_allocator() -> sys::Struct_nk_allocator {
     use alloc::heap;
     const ALIGN: usize = 4;
