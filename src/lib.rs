@@ -550,3 +550,97 @@ convertible_enum! {
         Max => NK_BUTTON_MAX
     }
 }
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum StyleColor: Enum_nk_style_colors {
+        Text => NK_COLOR_TEXT,
+        Window => NK_COLOR_WINDOW,
+        Header => NK_COLOR_HEADER,
+        Border => NK_COLOR_BORDER,
+        Button => NK_COLOR_BUTTON,
+        Hover => NK_COLOR_BUTTON_HOVER,
+        Active => NK_COLOR_BUTTON_ACTIVE,
+        Toggle => NK_COLOR_TOGGLE,
+        Hover => NK_COLOR_TOGGLE_HOVER,
+        Cursor => NK_COLOR_TOGGLE_CURSOR,
+        Select => NK_COLOR_SELECT,
+        SelectActive => NK_COLOR_SELECT_ACTIVE,
+        Slider => NK_COLOR_SLIDER,
+        SliderCursor=> NK_COLOR_SLIDER_CURSOR,
+        SliderCursorHover => NK_COLOR_SLIDER_CURSOR_HOVER,
+        SliderCursorActive => NK_COLOR_SLIDER_CURSOR_ACTIVE,
+        ColorProperty => NK_COLOR_PROPERTY,
+        Edit => NK_COLOR_EDIT,
+        EditCursor => NK_COLOR_EDIT_CURSOR,
+        Combo => NK_COLOR_COMBO,
+        Chart => NK_COLOR_CHART,
+        ChartColor => NK_COLOR_CHART_COLOR,
+        ChartColorHighlight => NK_COLOR_CHART_COLOR_HIGHLIGHT,
+        Scrollbar => NK_COLOR_SCROLLBAR,
+        ScrollbarCursor => NK_COLOR_SCROLLBAR_CURSOR,
+        ScrollbarCursorHover => NK_COLOR_SCROLLBAR_CURSOR_HOVER,
+        ScrollbarCursorActive => NK_COLOR_SCROLLBAR_CURSOR_ACTIVE,
+        TabHeader => NK_COLOR_TAB_HEADER,
+        Count => NK_COLOR_COUNT,
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum WidgetLayoutState: Enum_nk_widget_layout_states {
+        Invalid => NK_WIDGET_INVALID,
+        Valid => NK_WIDGET_VALID,
+        Rom => NK_WIDGET_ROM,
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum WidgetState: Enum_nk_widget_states {
+        Inactive => NK_WIDGET_STATE_INACTIVE,
+        Entered => NK_WIDGET_STATE_ENTERED,
+        Hovered => NK_WIDGET_STATE_HOVERED,
+        Left => NK_WIDGET_STATE_LEFT,
+        Active => NK_WIDGET_STATE_ACTIVE,
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum TextAlign: Enum_nk_text_align {
+        Left => NK_TEXT_ALIGN_LEFT,
+        Centered => NK_TEXT_ALIGN_CENTERED,
+        Right => NK_TEXT_ALIGN_RIGHT,
+        Top => NK_TEXT_ALIGN_TOP,
+        Middle => NK_TEXT_ALIGN_MIDDLE,
+        Bottom => NK_TEXT_ALIGN_BOTTOM,
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum TextAlignment: Enum_nk_text_alignment {
+        Left => NK_TEXT_LEFT,
+        Centered => NK_TEXT_CENTERED,
+        Right => NK_TEXT_RIGHT,
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum EditFlags {
+        Default => NK_EDIT_DEFAULT,
+        ReadOnly => NK_EDIT_READ_ONLY,
+        AutoSelect => NK_EDIT_AUTO_SELECT,
+        SigEnter => NK_EDIT_SIG_ENTER,
+        AllowTab => NK_EDIT_ALLOW_TAB,
+        NoCursor => NK_EDIT_NO_CURSOR,
+        Selectable => NK_EDIT_SELECTABLE,
+        ClipBoard => NK_EDIT_CLIPBOARD,
+        CtrlEnterNewline => NK_EDIT_CTRL_ENTER_NEWLINE,
+        NoHorizontalScroll => NK_EDIT_NO_HORIZONTAL_SCROLL,
+        AlwaysInsertMode => NK_EDIT_ALWAYS_INSERT_MODE,
+        Multiline => NK_EDIT_MULTILINE,
+    }
+}
