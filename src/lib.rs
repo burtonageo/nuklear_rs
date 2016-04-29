@@ -5,6 +5,7 @@ extern crate alloc;
 
 pub mod sys;
 
+use std::mem;
 use std::os::raw::c_void;
 
 pub struct DrawCommand {
@@ -652,5 +653,96 @@ impl Into<sys::Struct_nk_convert_config> for ConvertConfig {
             curve_segment_count: self.curve_segment_count as c_uint,
             null: self.null.into()
         }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SymbolType {
+    None = 0,
+    X = 1,
+    Underscore = 2,
+    Circle = 3,
+    FilledCircle = 4,
+    Rect = 5,
+    FilledRect = 6,
+    UpTriangle = 7,
+    DownTriangle = 8,
+    LeftTriangle = 9,
+    RightTriangle = 10,
+    Plus = 11,
+    Minus = 12,
+    Max = 13
+}
+
+impl From<sys::Enum_nk_symbol_type> for SymbolType {
+    fn from(raw_symbol_type: sys::Enum_nk_symbol_type) -> Self {
+        unsafe { mem::transmute(raw_symbol_type) }
+    }
+}
+
+impl Into<sys::Enum_nk_symbol_type> for SymbolType {
+    fn into(self) -> sys::Enum_nk_symbol_type {
+        unsafe { mem::transmute(self) }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Key {
+    None = 0,
+    Shift = 1,
+    Ctrl = 2,
+    Delete = 3,
+    Enter = 4,
+    Tab = 5,
+    Backspace = 6,
+    CopyKey = 7,
+    Cut = 8,
+    Paste = 9,
+    Up = 10,
+    Down = 11,
+    Left = 12,
+    Right = 13,
+    TextInsertMode = 14,
+    TextLineStart = 15,
+    TextLineEnd = 16,
+    TextUndo = 19,
+    TextRedo =20,
+    TextWordLeft = 21,
+    TextWordRight = 22,
+    Max = 23
+}
+
+impl From<sys::Enum_nk_keys> for Key {
+    fn from(raw_keys: sys::Enum_nk_keys) -> Self {
+        unsafe { mem::transmute(raw_keys) }
+    }
+}
+
+impl Into<sys::Enum_nk_keys> for Key {
+    fn into(self) -> sys::Enum_nk_keys {
+        unsafe { mem::transmute(self) }
+    }
+}
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Button {
+    Left,
+    Middle,
+    Right,
+    Max
+}
+
+impl From<sys::Enum_nk_buttons> for Button {
+    fn from(raw_buttons: sys::Enum_nk_buttons) -> Self {
+        unsafe { mem::transmute(raw_buttons) }
+    }
+}
+
+impl Into<sys::Enum_nk_buttons> for Button {
+    fn into(self) -> sys::Enum_nk_buttons {
+        unsafe { mem::transmute(self) }
     }
 }
