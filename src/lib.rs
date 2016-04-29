@@ -600,3 +600,57 @@ fn rust_allocator() -> sys::Struct_nk_allocator {
         userdata: data
     }
 }
+
+#[derive(Debug, Default)]
+pub struct DrawNullTexture {
+    pub texture: Handle,
+    pub uv: Vec2
+}
+
+impl Into<sys::Struct_nk_draw_null_texture> for DrawNullTexture {
+    fn into(self) -> sys::Struct_nk_draw_null_texture {
+        sys::Struct_nk_draw_null_texture {
+            texture: self.texture.into(),
+            uv: self.uv.into()
+        }
+    }
+}
+
+pub struct ConvertConfig {
+    pub global_alpha: f32,
+    pub line_aa: AntiAliasing,
+    pub shape_aa: AntiAliasing,
+    pub circle_segment_count: usize,
+    pub arc_segment_count: usize,
+    pub curve_segment_count: usize,
+    pub null: DrawNullTexture
+}
+
+impl Default for ConvertConfig {
+    fn default() -> Self {
+        ConvertConfig {
+            global_alpha: 1.0,
+            line_aa: AntiAliasing::Off,
+            shape_aa: AntiAliasing::Off,
+            circle_segment_count: 50,
+            arc_segment_count: 50,
+            curve_segment_count: 50,
+            null: Default::default()
+        }
+    }
+}
+
+impl Into<sys::Struct_nk_convert_config> for ConvertConfig {
+    fn into(self) -> sys::Struct_nk_convert_config {
+        use std::os::raw::{c_float, c_uint};
+        sys::Struct_nk_convert_config {
+            global_alpha: self.global_alpha as c_float,
+            line_AA: self.line_aa.into(),
+            shape_AA: self.shape_aa.into(),
+            circle_segment_count: self.circle_segment_count as c_uint,
+            arc_segment_count: self.arc_segment_count as c_uint,
+            curve_segment_count: self.curve_segment_count as c_uint,
+            null: self.null.into()
+        }
+    }
+}
