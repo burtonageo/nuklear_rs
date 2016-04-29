@@ -5,15 +5,63 @@ extern crate alloc;
 
 pub mod sys;
 
-use std::mem;
 use std::os::raw::c_void;
+use sys::*;
+
+macro_rules! convertible_enum {
+    ($(#[$top_lvl_attrs:meta])* pub enum $enum_nm:ident : $convert:ident {
+        $($(#[$arm_attrs:meta])* $arm:ident => $other:ident),*
+    }) => (
+        $(#[$top_lvl_attrs])*
+        pub enum $enum_nm {
+            $($(#[$arm_attrs])* $arm),*
+        }
+
+        convertible_enum!(@_impl conversion from $enum_nm to $convert {
+            $($arm => $other),*
+        });
+    );
+
+    ($(#[$top_lvl_attrs:meta])* enum $enum_nm:ident : $convert:ident {
+        $($(#[$arm_attrs:meta])* $arm:ident => $other:ident),*
+    }) => (
+        $(#[$top_lvl_attrs])*
+        enum $enum_nm {
+            $($(#[$arm_attrs])* $arm),*
+        }
+
+        convertible_enum!(@_impl conversion from $enum_nm to $convert {
+            $($arm => $other),*
+        });
+    );
+
+    (@_impl conversion from $enum_nm:ident to $convert:ident {
+        $($arm:ident => $other:ident),*
+    }) => (
+        impl ::std::convert::Into<$convert> for $enum_nm {
+            fn into(self) -> $convert {
+                match self {
+                    $($enum_nm::$arm => $convert::$other),*
+                }
+            }
+        }
+
+        impl ::std::convert::From<$convert> for $enum_nm {
+            fn from(other: $convert) -> Self {
+                match other {
+                    $($convert::$other => $enum_nm::$arm),*
+                }
+            }
+        }
+    );
+}
 
 pub struct DrawCommand {
-    _priv: ()
+    _priv: (),
 }
 
 pub struct DrawList {
-    _priv: ()
+    _priv: (),
 }
 
 impl From<bool> for sys::Enum_Unnamed1 {
@@ -40,7 +88,7 @@ pub struct Color {
     pub r: u8,
     pub g: u8,
     pub b: u8,
-    pub a: u8
+    pub a: u8,
 }
 
 impl From<sys::Struct_nk_color> for Color {
@@ -49,7 +97,7 @@ impl From<sys::Struct_nk_color> for Color {
             r: raw_color.r,
             g: raw_color.g,
             b: raw_color.b,
-            a: raw_color.a
+            a: raw_color.a,
         }
     }
 }
@@ -60,7 +108,7 @@ impl Into<sys::Struct_nk_color> for Color {
             r: self.r,
             g: self.g,
             b: self.b,
-            a: self.a
+            a: self.a,
         }
     }
 }
@@ -68,14 +116,14 @@ impl Into<sys::Struct_nk_color> for Color {
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
-    pub y: f32
+    pub y: f32,
 }
 
 impl From<sys::Struct_nk_vec2> for Vec2 {
     fn from(raw_vec: sys::Struct_nk_vec2) -> Self {
         Vec2 {
             x: raw_vec.x,
-            y: raw_vec.y
+            y: raw_vec.y,
         }
     }
 }
@@ -84,7 +132,7 @@ impl Into<sys::Struct_nk_vec2> for Vec2 {
     fn into(self) -> sys::Struct_nk_vec2 {
         sys::Struct_nk_vec2 {
             x: self.x,
-            y: self.y
+            y: self.y,
         }
     }
 }
@@ -92,14 +140,14 @@ impl Into<sys::Struct_nk_vec2> for Vec2 {
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Vec2i {
     pub x: i16,
-    pub y: i16
+    pub y: i16,
 }
 
 impl From<sys::Struct_nk_vec2i> for Vec2i {
     fn from(raw_vec: sys::Struct_nk_vec2i) -> Self {
         Vec2i {
             x: raw_vec.x,
-            y: raw_vec.y
+            y: raw_vec.y,
         }
     }
 }
@@ -108,7 +156,7 @@ impl Into<sys::Struct_nk_vec2i> for Vec2i {
     fn into(self) -> sys::Struct_nk_vec2i {
         sys::Struct_nk_vec2i {
             x: self.x,
-            y: self.y
+            y: self.y,
         }
     }
 }
@@ -118,7 +166,7 @@ pub struct Rect {
     pub x: f32,
     pub y: f32,
     pub w: f32,
-    pub h: f32
+    pub h: f32,
 }
 
 impl From<sys::Struct_nk_rect> for Rect {
@@ -127,7 +175,7 @@ impl From<sys::Struct_nk_rect> for Rect {
             x: raw_rect.x,
             y: raw_rect.y,
             w: raw_rect.w,
-            h: raw_rect.h
+            h: raw_rect.h,
         }
     }
 }
@@ -138,7 +186,7 @@ impl Into<sys::Struct_nk_rect> for Rect {
             x: self.x,
             y: self.y,
             w: self.w,
-            h: self.h
+            h: self.h,
         }
     }
 }
@@ -148,7 +196,7 @@ pub struct Recti {
     pub x: i16,
     pub y: i16,
     pub w: i16,
-    pub h: i16
+    pub h: i16,
 }
 
 impl From<sys::Struct_nk_recti> for Recti {
@@ -157,7 +205,7 @@ impl From<sys::Struct_nk_recti> for Recti {
             x: raw_rect.x,
             y: raw_rect.y,
             w: raw_rect.w,
-            h: raw_rect.h
+            h: raw_rect.h,
         }
     }
 }
@@ -168,7 +216,7 @@ impl Into<sys::Struct_nk_recti> for Recti {
             x: self.x,
             y: self.y,
             w: self.w,
-            h: self.h
+            h: self.h,
         }
     }
 }
@@ -176,7 +224,7 @@ impl Into<sys::Struct_nk_recti> for Recti {
 #[derive(Debug, Eq, PartialEq)]
 pub enum Handle {
     Ptr(*mut c_void),
-    Id(i32)
+    Id(i32),
 }
 
 impl Default for Handle {
@@ -201,7 +249,7 @@ impl Into<sys::nk_handle> for Handle {
     fn into(self) -> sys::nk_handle {
         match self {
             Handle::Ptr(ptr) => unsafe { sys::nk_handle_ptr(ptr) },
-            Handle::Id(id) => unsafe { sys::nk_handle_id(id) }
+            Handle::Id(id) => unsafe { sys::nk_handle_id(id) },
         }
     }
 }
@@ -211,7 +259,7 @@ pub struct Image {
     pub handle: Handle,
     pub w: u16,
     pub h: u16,
-    pub region: [u16; 4]
+    pub region: [u16; 4],
 }
 
 impl Into<sys::Struct_nk_image> for Image {
@@ -220,7 +268,7 @@ impl Into<sys::Struct_nk_image> for Image {
             handle: self.handle.into(),
             w: self.w,
             h: self.h,
-            region: self.region
+            region: self.region,
         }
     }
 }
@@ -228,14 +276,14 @@ impl Into<sys::Struct_nk_image> for Image {
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Scroll {
     pub x: u16,
-    pub y: u16
+    pub y: u16,
 }
 
 impl From<sys::Struct_nk_scroll> for Scroll {
     fn from(raw_vec: sys::Struct_nk_scroll) -> Self {
         Scroll {
             x: raw_vec.x,
-            y: raw_vec.y
+            y: raw_vec.y,
         }
     }
 }
@@ -244,342 +292,115 @@ impl Into<sys::Struct_nk_scroll> for Scroll {
     fn into(self) -> sys::Struct_nk_scroll {
         sys::Struct_nk_scroll {
             x: self.x,
-            y: self.y
+            y: self.y,
         }
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Heading {
-    Up = 0,
-    Down = 1,
-    Right = 2,
-    Left = 3
-}
-
-impl From<sys::Enum_nk_heading> for Heading {
-    fn from(raw_heading: sys::Enum_nk_heading) -> Self {
-        match raw_heading {
-            sys::Enum_nk_heading::NK_UP => Heading::Up,
-            sys::Enum_nk_heading::NK_RIGHT => Heading::Down,
-            sys::Enum_nk_heading::NK_DOWN => Heading::Right,
-            sys::Enum_nk_heading::NK_LEFT => Heading::Left
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum Heading: Enum_nk_heading {
+        Up => NK_UP,
+        Down => NK_RIGHT,
+        Right => NK_DOWN,
+        Left => NK_LEFT
     }
 }
 
-impl Into<sys::Enum_nk_heading> for Heading {
-    fn into(self) -> sys::Enum_nk_heading {
-        match self {
-            Heading::Up => sys::Enum_nk_heading::NK_UP,
-            Heading::Down => sys::Enum_nk_heading::NK_RIGHT,
-            Heading::Right => sys::Enum_nk_heading::NK_DOWN,
-            Heading::Left => sys::Enum_nk_heading::NK_LEFT
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum ButtonBehavior: Enum_nk_button_behavior {
+        Default => NK_BUTTON_DEFAULT,
+        Repeater => NK_BUTTON_REPEATER
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ButtonBehavior {
-    Default = 0,
-    Repeater = 1
-}
-
-impl From<sys::Enum_nk_button_behavior> for ButtonBehavior {
-    fn from(raw_button_behavior: sys::Enum_nk_button_behavior) -> Self {
-        match raw_button_behavior {
-            sys::Enum_nk_button_behavior::NK_BUTTON_DEFAULT => ButtonBehavior::Default,
-            sys::Enum_nk_button_behavior::NK_BUTTON_REPEATER => ButtonBehavior::Repeater
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum Modify: Enum_nk_modify {
+        Fixed => NK_FIXED,
+        Modifiable => NK_MODIFIABLE
     }
 }
 
-impl Into<sys::Enum_nk_button_behavior> for ButtonBehavior {
-    fn into(self) -> sys::Enum_nk_button_behavior {
-        match self {
-            ButtonBehavior::Default => sys::Enum_nk_button_behavior::NK_BUTTON_DEFAULT,
-            ButtonBehavior::Repeater => sys::Enum_nk_button_behavior::NK_BUTTON_REPEATER,
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum Orientation: Enum_nk_orientation {
+        Vertical => NK_VERTICAL,
+        Horizontal => NK_HORIZONTAL
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Modify {
-    Fixed = 0,
-    Modifiable = 1
-}
-
-impl From<sys::Enum_nk_modify> for Modify {
-    fn from(raw_modify: sys::Enum_nk_modify) -> Self {
-        match raw_modify {
-            sys::Enum_nk_modify::NK_FIXED => Modify::Fixed,
-            sys::Enum_nk_modify::NK_MODIFIABLE => Modify::Modifiable
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum CollapseState: Enum_nk_collapse_states {
+        Minimized => NK_MINIMIZED,
+        Maximized => NK_MAXIMIZED
     }
 }
 
-impl Into<sys::Enum_nk_modify> for Modify {
-    fn into(self) -> sys::Enum_nk_modify {
-        match self {
-            Modify::Fixed => sys::Enum_nk_modify::NK_FIXED,
-            Modify::Modifiable => sys::Enum_nk_modify::NK_MODIFIABLE
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum ShowState: Enum_nk_show_states {
+        Hidden => NK_HIDDEN,
+        Shown => NK_SHOWN
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Orientation {
-    Vertical = 0,
-    Horizontal = 1
-}
-
-impl From<sys::Enum_nk_orientation> for Orientation {
-    fn from(raw_modify: sys::Enum_nk_orientation) -> Self {
-        match raw_modify {
-            sys::Enum_nk_orientation::NK_VERTICAL => Orientation::Vertical,
-            sys::Enum_nk_orientation::NK_HORIZONTAL => Orientation::Horizontal
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum ChartType: Enum_nk_chart_type {
+        Lines => NK_CHART_LINES,
+        Column => NK_CHART_COLUMN,
+        Max => NK_CHART_MAX
     }
 }
 
-impl Into<sys::Enum_nk_orientation> for Orientation {
-    fn into(self) -> sys::Enum_nk_orientation {
-        match self {
-            Orientation::Vertical => sys::Enum_nk_orientation::NK_VERTICAL,
-            Orientation::Horizontal => sys::Enum_nk_orientation::NK_HORIZONTAL
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum ChartEvent: Enum_nk_chart_event {
+        Hovering => NK_CHART_HOVERING,
+        Clicked => NK_CHART_CLICKED
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum CollapseState {
-    Minimized = 0,
-    Maximized = 1
-}
-
-impl From<sys::Enum_nk_collapse_states> for CollapseState {
-    fn from(raw_modify: sys::Enum_nk_collapse_states) -> Self {
-        match raw_modify {
-            sys::Enum_nk_collapse_states::NK_MINIMIZED => CollapseState::Minimized,
-            sys::Enum_nk_collapse_states::NK_MAXIMIZED => CollapseState::Maximized
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum ColorFormat: Enum_nk_color_format {
+        Rgb => NK_RGB,
+        Rgba => NK_RGBA
     }
 }
 
-impl Into<sys::Enum_nk_collapse_states> for CollapseState {
-    fn into(self) -> sys::Enum_nk_collapse_states {
-        match self {
-            CollapseState::Minimized => sys::Enum_nk_collapse_states::NK_MINIMIZED,
-            CollapseState::Maximized => sys::Enum_nk_collapse_states::NK_MAXIMIZED
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum PopupType: Enum_nk_popup_type {
+        Dynamic => NK_POPUP_DYNAMIC,
+        Static => NK_POPUP_STATIC
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ShowState {
-    Hidden = 0,
-    Shown = 1
-}
-
-impl From<sys::Enum_nk_show_states> for ShowState {
-    fn from(raw_show_state: sys::Enum_nk_show_states) -> Self {
-        match raw_show_state {
-            sys::Enum_nk_show_states::NK_HIDDEN => ShowState::Hidden,
-            sys::Enum_nk_show_states::NK_SHOWN => ShowState::Shown
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum LayoutFormat: Enum_nk_layout_format {
+        Dynamic => NK_DYNAMIC,
+        Static => NK_STATIC
     }
 }
 
-impl Into<sys::Enum_nk_show_states> for ShowState {
-    fn into(self) -> sys::Enum_nk_show_states {
-        match self {
-            ShowState::Hidden => sys::Enum_nk_show_states::NK_HIDDEN,
-            ShowState::Shown => sys::Enum_nk_show_states::NK_SHOWN
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum TreeType: Enum_nk_tree_type {
+        Node => NK_TREE_NODE,
+        Tab => NK_TREE_TAB
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ChartType {
-    Lines,
-    Column,
-    Max
-}
-
-impl From<sys::Enum_nk_chart_type> for ChartType {
-    fn from(raw_chart_type: sys::Enum_nk_chart_type) -> Self {
-        match raw_chart_type {
-            sys::Enum_nk_chart_type::NK_CHART_LINES => ChartType::Lines,
-            sys::Enum_nk_chart_type::NK_CHART_COLUMN => ChartType::Column,
-            sys::Enum_nk_chart_type::NK_CHART_MAX => ChartType::Max
-        }
-    }
-}
-
-impl Into<sys::Enum_nk_chart_type> for ChartType {
-    fn into(self) -> sys::Enum_nk_chart_type {
-        match self {
-            ChartType::Lines => sys::Enum_nk_chart_type::NK_CHART_LINES,
-            ChartType::Column => sys::Enum_nk_chart_type::NK_CHART_COLUMN,
-            ChartType::Max => sys::Enum_nk_chart_type::NK_CHART_MAX
-        }
-    }
-}
-
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ChartEvent {
-    Hovering = 1,
-    Clicked = 2
-}
-
-impl From<sys::Enum_nk_chart_event> for ChartEvent {
-    fn from(raw_show_state: sys::Enum_nk_chart_event) -> Self {
-        match raw_show_state {
-            sys::Enum_nk_chart_event::NK_CHART_HOVERING => ChartEvent::Hovering,
-            sys::Enum_nk_chart_event::NK_CHART_CLICKED => ChartEvent::Clicked
-        }
-    }
-}
-
-impl Into<sys::Enum_nk_chart_event> for ChartEvent {
-    fn into(self) -> sys::Enum_nk_chart_event {
-        match self {
-            ChartEvent::Hovering => sys::Enum_nk_chart_event::NK_CHART_HOVERING,
-            ChartEvent::Clicked => sys::Enum_nk_chart_event::NK_CHART_CLICKED
-        }
-    }
-}
-
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum ColorFormat {
-    Rgb = 0,
-    Rgba = 1
-}
-
-impl From<sys::Enum_nk_color_format> for ColorFormat {
-    fn from(raw_color_format: sys::Enum_nk_color_format) -> Self {
-        match raw_color_format {
-            sys::Enum_nk_color_format::NK_RGB => ColorFormat::Rgb,
-            sys::Enum_nk_color_format::NK_RGBA => ColorFormat::Rgba
-        }
-    }
-}
-
-impl Into<sys::Enum_nk_color_format> for ColorFormat {
-    fn into(self) -> sys::Enum_nk_color_format {
-        match self {
-            ColorFormat::Rgb => sys::Enum_nk_color_format::NK_RGB,
-            ColorFormat::Rgba => sys::Enum_nk_color_format::NK_RGBA
-        }
-    }
-}
-
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum PopupType {
-    Dynamic = 0,
-    Static = 1
-}
-
-impl From<sys::Enum_nk_popup_type> for PopupType {
-    fn from(raw_popup_type: sys::Enum_nk_popup_type) -> Self {
-        match raw_popup_type {
-            sys::Enum_nk_popup_type::NK_POPUP_DYNAMIC => PopupType::Dynamic,
-            sys::Enum_nk_popup_type::NK_POPUP_STATIC => PopupType::Static
-        }
-    }
-}
-
-impl Into<sys::Enum_nk_popup_type> for PopupType {
-    fn into(self) -> sys::Enum_nk_popup_type {
-        match self {
-            PopupType::Dynamic => sys::Enum_nk_popup_type::NK_POPUP_DYNAMIC,
-            PopupType::Static => sys::Enum_nk_popup_type::NK_POPUP_STATIC
-        }
-    }
-}
-
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum LayoutFormat {
-    Dynamic = 0,
-    Static = 1
-}
-
-impl From<sys::Enum_nk_layout_format> for LayoutFormat {
-    fn from(raw_layout_format: sys::Enum_nk_layout_format) -> Self {
-        match raw_layout_format {
-            sys::Enum_nk_layout_format::NK_DYNAMIC => LayoutFormat::Dynamic,
-            sys::Enum_nk_layout_format::NK_STATIC => LayoutFormat::Static
-        }
-    }
-}
-
-impl Into<sys::Enum_nk_layout_format> for LayoutFormat {
-    fn into(self) -> sys::Enum_nk_layout_format {
-        match self {
-            LayoutFormat::Dynamic => sys::Enum_nk_layout_format::NK_DYNAMIC,
-            LayoutFormat::Static => sys::Enum_nk_layout_format::NK_STATIC
-        }
-    }
-}
-
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TreeType {
-    Node = 0,
-    Tab = 1
-}
-
-impl From<sys::Enum_nk_tree_type> for TreeType {
-    fn from(raw_layout_format: sys::Enum_nk_tree_type) -> Self {
-        match raw_layout_format {
-            sys::Enum_nk_tree_type::NK_TREE_NODE => TreeType::Node,
-            sys::Enum_nk_tree_type::NK_TREE_TAB => TreeType::Tab
-        }
-    }
-}
-
-impl Into<sys::Enum_nk_tree_type> for TreeType {
-    fn into(self) -> sys::Enum_nk_tree_type {
-        match self {
-            TreeType::Node => sys::Enum_nk_tree_type::NK_TREE_NODE,
-            TreeType::Tab => sys::Enum_nk_tree_type::NK_TREE_TAB
-        }
-    }
-}
-
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum AntiAliasing {
-    Off = 0,
-    On = 1
-}
-
-impl From<sys::Enum_nk_anti_aliasing> for AntiAliasing {
-    fn from(raw_layout_format: sys::Enum_nk_anti_aliasing) -> Self {
-        match raw_layout_format {
-            sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_OFF => AntiAliasing::Off,
-            sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_ON => AntiAliasing::On
-        }
-    }
-}
-
-impl Into<sys::Enum_nk_anti_aliasing> for AntiAliasing {
-    fn into(self) -> sys::Enum_nk_anti_aliasing {
-        match self {
-            AntiAliasing::Off => sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_OFF,
-            AntiAliasing::On => sys::Enum_nk_anti_aliasing::NK_ANTI_ALIASING_ON
-        }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum AntiAliasing: Enum_nk_anti_aliasing {
+        Off => NK_ANTI_ALIASING_OFF,
+        On => NK_ANTI_ALIASING_ON
     }
 }
 
@@ -587,7 +408,9 @@ impl Into<sys::Enum_nk_anti_aliasing> for AntiAliasing {
 fn rust_allocator() -> sys::Struct_nk_allocator {
     use alloc::heap;
     const ALIGN: usize = 4;
-    unsafe extern "C" fn allocate(mut data: sys::nk_handle, ptr: *mut c_void, size: sys::nk_size)
+    unsafe extern "C" fn allocate(mut data: sys::nk_handle,
+                                  ptr: *mut c_void,
+                                  size: sys::nk_size)
                                   -> *mut c_void {
         let alloc_data = data.ptr() as *mut usize;
         let allocation = if *alloc_data == 0 {
@@ -610,21 +433,21 @@ fn rust_allocator() -> sys::Struct_nk_allocator {
     sys::Struct_nk_allocator {
         alloc: Some(allocate),
         free: Some(free),
-        userdata: data
+        userdata: data,
     }
 }
 
 #[derive(Debug, Default)]
 pub struct DrawNullTexture {
     pub texture: Handle,
-    pub uv: Vec2
+    pub uv: Vec2,
 }
 
 impl Into<sys::Struct_nk_draw_null_texture> for DrawNullTexture {
     fn into(self) -> sys::Struct_nk_draw_null_texture {
         sys::Struct_nk_draw_null_texture {
             texture: self.texture.into(),
-            uv: self.uv.into()
+            uv: self.uv.into(),
         }
     }
 }
@@ -636,7 +459,7 @@ pub struct ConvertConfig {
     pub circle_segment_count: usize,
     pub arc_segment_count: usize,
     pub curve_segment_count: usize,
-    pub null: DrawNullTexture
+    pub null: DrawNullTexture,
 }
 
 impl Default for ConvertConfig {
@@ -648,7 +471,7 @@ impl Default for ConvertConfig {
             circle_segment_count: 50,
             arc_segment_count: 50,
             curve_segment_count: 50,
-            null: Default::default()
+            null: Default::default(),
         }
     }
 }
@@ -663,98 +486,67 @@ impl Into<sys::Struct_nk_convert_config> for ConvertConfig {
             circle_segment_count: self.circle_segment_count as c_uint,
             arc_segment_count: self.arc_segment_count as c_uint,
             curve_segment_count: self.curve_segment_count as c_uint,
-            null: self.null.into()
+            null: self.null.into(),
         }
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum SymbolType {
-    None = 0,
-    X = 1,
-    Underscore = 2,
-    Circle = 3,
-    FilledCircle = 4,
-    Rect = 5,
-    FilledRect = 6,
-    UpTriangle = 7,
-    DownTriangle = 8,
-    LeftTriangle = 9,
-    RightTriangle = 10,
-    Plus = 11,
-    Minus = 12,
-    Max = 13
-}
-
-impl From<sys::Enum_nk_symbol_type> for SymbolType {
-    fn from(raw_symbol_type: sys::Enum_nk_symbol_type) -> Self {
-        unsafe { mem::transmute(raw_symbol_type) }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum SymbolType: Enum_nk_symbol_type {
+        None => NK_SYMBOL_NONE,
+        X => NK_SYMBOL_X,
+        Underscore => NK_SYMBOL_UNDERSCORE,
+        Circle => NK_SYMBOL_CIRCLE,
+        FilledCircle => NK_SYMBOL_CIRCLE_FILLED,
+        Rect => NK_SYMBOL_RECT,
+        FilledRect => NK_SYMBOL_RECT_FILLED,
+        UpTriangle => NK_SYMBOL_TRIANGLE_UP,
+        DownTriangle => NK_SYMBOL_TRIANGLE_DOWN,
+        LeftTriangle => NK_SYMBOL_TRIANGLE_LEFT,
+        RightTriangle => NK_SYMBOL_TRIANGLE_RIGHT,
+        Plus => NK_SYMBOL_PLUS,
+        Minus => NK_SYMBOL_MINUS,
+        Max => NK_SYMBOL_MAX
     }
 }
 
-impl Into<sys::Enum_nk_symbol_type> for SymbolType {
-    fn into(self) -> sys::Enum_nk_symbol_type {
-        unsafe { mem::transmute(self) }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum Key: Enum_nk_keys {
+        None => NK_KEY_NONE,
+        Shift => NK_KEY_SHIFT,
+        Ctrl => NK_KEY_CTRL,
+        Delete => NK_KEY_DEL, 
+        Enter => NK_KEY_ENTER,
+        Tab => NK_KEY_TAB,
+        Backspace => NK_KEY_BACKSPACE,
+        CopyKey => NK_KEY_COPY,
+        Cut => NK_KEY_CUT,
+        Paste => NK_KEY_PASTE,
+        Up => NK_KEY_UP,
+        Down => NK_KEY_DOWN,
+        Left => NK_KEY_LEFT,
+        Right => NK_KEY_RIGHT,
+        TextInsertMode => NK_KEY_TEXT_INSERT_MODE,
+        TextLineStart => NK_KEY_TEXT_LINE_START,
+        TextLineEnd => NK_KEY_TEXT_LINE_END,
+        TextStart => NK_KEY_TEXT_START,
+        TextEnd => NK_KEY_TEXT_END,
+        TextUndo => NK_KEY_TEXT_UNDO,
+        TextRedo => NK_KEY_TEXT_REDO,
+        TextWordLeft => NK_KEY_TEXT_WORD_LEFT,
+        TextWordRight => NK_KEY_TEXT_WORD_RIGHT,
+        Max => NK_KEY_MAX
     }
 }
 
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Key {
-    None = 0,
-    Shift = 1,
-    Ctrl = 2,
-    Delete = 3,
-    Enter = 4,
-    Tab = 5,
-    Backspace = 6,
-    CopyKey = 7,
-    Cut = 8,
-    Paste = 9,
-    Up = 10,
-    Down = 11,
-    Left = 12,
-    Right = 13,
-    TextInsertMode = 14,
-    TextLineStart = 15,
-    TextLineEnd = 16,
-    TextUndo = 19,
-    TextRedo =20,
-    TextWordLeft = 21,
-    TextWordRight = 22,
-    Max = 23
-}
-
-impl From<sys::Enum_nk_keys> for Key {
-    fn from(raw_keys: sys::Enum_nk_keys) -> Self {
-        unsafe { mem::transmute(raw_keys) }
-    }
-}
-
-impl Into<sys::Enum_nk_keys> for Key {
-    fn into(self) -> sys::Enum_nk_keys {
-        unsafe { mem::transmute(self) }
-    }
-}
-
-#[repr(u32)]
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Button {
-    Left,
-    Middle,
-    Right,
-    Max
-}
-
-impl From<sys::Enum_nk_buttons> for Button {
-    fn from(raw_buttons: sys::Enum_nk_buttons) -> Self {
-        unsafe { mem::transmute(raw_buttons) }
-    }
-}
-
-impl Into<sys::Enum_nk_buttons> for Button {
-    fn into(self) -> sys::Enum_nk_buttons {
-        unsafe { mem::transmute(self) }
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum Button: Enum_nk_buttons {
+        Left => NK_BUTTON_LEFT,
+        Middle => NK_BUTTON_MIDDLE,
+        Right => NK_BUTTON_RIGHT,
+        Max => NK_BUTTON_MAX
     }
 }
