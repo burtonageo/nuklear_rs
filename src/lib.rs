@@ -185,6 +185,18 @@ impl Default for Handle {
     }
 }
 
+impl From<*mut c_void> for Handle {
+    fn from(ptr: *mut c_void) -> Self {
+        Handle::Ptr(ptr)
+    }
+}
+
+impl From<i32> for Handle {
+    fn from(id: i32) -> Self {
+        Handle::Id(id)
+    }
+}
+
 impl Into<sys::nk_handle> for Handle {
     fn into(self) -> sys::nk_handle {
         match self {
@@ -593,7 +605,7 @@ fn rust_allocator() -> sys::Struct_nk_allocator {
     }
 
     let bytes_allocated = Box::new(0usize);
-    let data = Handle::Ptr(Box::into_raw(bytes_allocated) as *mut _).into();
+    let data = Handle::from(Box::into_raw(bytes_allocated) as *mut _).into();
 
     sys::Struct_nk_allocator {
         alloc: Some(allocate),
