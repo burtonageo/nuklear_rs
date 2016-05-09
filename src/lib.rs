@@ -2,9 +2,12 @@
 
 #[cfg(feature = "rust_allocator")]
 extern crate alloc;
+extern crate core;
 
 pub mod sys;
 
+#[cfg(feature = "rust_allocator")]
+use alloc::heap;
 use std::os::raw::c_void;
 use sys::*;
 
@@ -404,6 +407,64 @@ convertible_enum! {
     }
 }
 
+pub trait Allocator {
+    unsafe fn allocate(&mut self, old_pointer: *mut c_void, size: usize) -> *mut c_void;
+    unsafe fn deallocate(&mut self, pointer: *mut c_void);
+}
+
+fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> sys::Struct_nk_allocator {
+    unsafe extern "C" fn allocate<A>(mut data: sys::nk_handle,
+                                     old_pointer: *mut c_void,
+                                     size: sys::nk_size) -> *mut c_void
+        where A: Allocator {
+        let mut allocator_struct = data.ptr() as *mut A;
+        (*allocator_struct).allocate(old_pointer, size as usize)
+    }
+
+    unsafe extern "C" fn deallocate<A>(mut data: sys::nk_handle, ptr: *mut c_void)
+        where A: Allocator {
+        let mut allocator_struct = data.ptr() as *mut A;
+        (*allocator_struct).deallocate(ptr)
+    }
+
+    let allocate_fn: unsafe extern fn(sys::nk_handle, *mut c_void, sys::nk_size) -> *mut c_void = allocate::<A>;
+    let dealloc_fn: unsafe extern fn(sys::nk_handle, *mut c_void) = deallocate::<A>;
+    let allocator_data: *mut c_void = unsafe { core::mem::transmute(allocator) };
+
+    sys::Struct_nk_allocator {
+        alloc: Some(allocate_fn),
+        free: Some(dealloc_fn),
+        userdata: Handle::Ptr(allocator_data).into()
+    }
+}
+
+#[cfg(feature = "rust_allocator")]
+#[derive(Default)]
+pub struct RustAllocator {
+    bytes_allocated: usize
+}
+
+#[cfg(feature = "rust_allocator")]
+const ALIGN: usize = 4;
+
+#[cfg(feature = "rust_allocator")]
+impl Allocator for RustAllocator {
+    unsafe fn allocate(&mut self, old_pointer: *mut c_void, size: usize) -> *mut c_void {
+        let allocation = if self.bytes_allocated == 0 {
+            heap::allocate(size as usize, ALIGN)
+        } else {
+            heap::reallocate(old_pointer as *mut u8, self.bytes_allocated, size, ALIGN)
+        };
+        self.bytes_allocated = size;
+        allocation as *mut _
+    }
+
+    unsafe fn deallocate(&mut self, pointer: *mut c_void) {
+        heap::deallocate(pointer as *mut u8, self.bytes_allocated as usize, ALIGN);
+        self.bytes_allocated = 0;
+    }
+}
+
 #[cfg(feature = "rust_allocator")]
 fn rust_allocator() -> sys::Struct_nk_allocator {
     use alloc::heap;
@@ -435,6 +496,34 @@ fn rust_allocator() -> sys::Struct_nk_allocator {
         free: Some(free),
         userdata: data,
     }
+}
+
+#[test]
+#[cfg(feature = "rust_allocator")]
+fn test_rust_allocation() {
+    use std::ptr;
+    let mut allocator = RustAllocator::default();
+    let alloced = unsafe {
+        allocator.allocate(ptr::null_mut(), 20)
+    };
+    assert_eq!(allocator.bytes_allocated, 20);
+
+    unsafe { allocator.deallocate(alloced) };
+    assert_eq!(allocator.bytes_allocated, 0);
+}
+
+#[test]
+#[cfg(feature = "rust_allocator")]
+fn test_raw_allocation() {
+    use std::ptr;
+    const USE_TRAIT: bool = true;
+    let mut allocator = RustAllocator::default();
+    let raw_alloc = if USE_TRAIT { into_raw_allocator(&mut allocator) } else { rust_allocator() };
+    let alloced = unsafe {
+        (raw_alloc.alloc.unwrap())(raw_alloc.userdata, ptr::null_mut(), 48)
+    };
+
+    unsafe { (raw_alloc.free.unwrap())(raw_alloc.userdata, alloced) };
 }
 
 #[derive(Debug, Default)]
@@ -559,10 +648,10 @@ convertible_enum! {
         Header => NK_COLOR_HEADER,
         Border => NK_COLOR_BORDER,
         Button => NK_COLOR_BUTTON,
-        Hover => NK_COLOR_BUTTON_HOVER,
+        ButtonHover => NK_COLOR_BUTTON_HOVER,
         Active => NK_COLOR_BUTTON_ACTIVE,
         Toggle => NK_COLOR_TOGGLE,
-        Hover => NK_COLOR_TOGGLE_HOVER,
+        ToggleHover => NK_COLOR_TOGGLE_HOVER,
         Cursor => NK_COLOR_TOGGLE_CURSOR,
         Select => NK_COLOR_SELECT,
         SelectActive => NK_COLOR_SELECT_ACTIVE,
@@ -582,7 +671,7 @@ convertible_enum! {
         ScrollbarCursorHover => NK_COLOR_SCROLLBAR_CURSOR_HOVER,
         ScrollbarCursorActive => NK_COLOR_SCROLLBAR_CURSOR_ACTIVE,
         TabHeader => NK_COLOR_TAB_HEADER,
-        Count => NK_COLOR_COUNT,
+        Count => NK_COLOR_COUNT
     }
 }
 
@@ -591,7 +680,7 @@ convertible_enum! {
     pub enum WidgetLayoutState: Enum_nk_widget_layout_states {
         Invalid => NK_WIDGET_INVALID,
         Valid => NK_WIDGET_VALID,
-        Rom => NK_WIDGET_ROM,
+        Rom => NK_WIDGET_ROM
     }
 }
 
@@ -602,7 +691,7 @@ convertible_enum! {
         Entered => NK_WIDGET_STATE_ENTERED,
         Hovered => NK_WIDGET_STATE_HOVERED,
         Left => NK_WIDGET_STATE_LEFT,
-        Active => NK_WIDGET_STATE_ACTIVE,
+        Active => NK_WIDGET_STATE_ACTIVE
     }
 }
 
@@ -614,7 +703,7 @@ convertible_enum! {
         Right => NK_TEXT_ALIGN_RIGHT,
         Top => NK_TEXT_ALIGN_TOP,
         Middle => NK_TEXT_ALIGN_MIDDLE,
-        Bottom => NK_TEXT_ALIGN_BOTTOM,
+        Bottom => NK_TEXT_ALIGN_BOTTOM
     }
 }
 
@@ -623,13 +712,13 @@ convertible_enum! {
     pub enum TextAlignment: Enum_nk_text_alignment {
         Left => NK_TEXT_LEFT,
         Centered => NK_TEXT_CENTERED,
-        Right => NK_TEXT_RIGHT,
+        Right => NK_TEXT_RIGHT
     }
 }
 
 convertible_enum! {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-    pub enum EditFlags {
+    pub enum EditFlags: Enum_nk_edit_flags {
         Default => NK_EDIT_DEFAULT,
         ReadOnly => NK_EDIT_READ_ONLY,
         AutoSelect => NK_EDIT_AUTO_SELECT,
@@ -641,6 +730,6 @@ convertible_enum! {
         CtrlEnterNewline => NK_EDIT_CTRL_ENTER_NEWLINE,
         NoHorizontalScroll => NK_EDIT_NO_HORIZONTAL_SCROLL,
         AlwaysInsertMode => NK_EDIT_ALWAYS_INSERT_MODE,
-        Multiline => NK_EDIT_MULTILINE,
+        Multiline => NK_EDIT_MULTILINE
     }
 }
