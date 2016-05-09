@@ -11,7 +11,7 @@ bitflags = "0.6"
 gcc = "0.3"
 
 [features]
-default = []
+default = ["rust_allocator"]
 rust_allocator = []
 io = []
 malloc_allocator = []
