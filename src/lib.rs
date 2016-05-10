@@ -8,6 +8,7 @@ pub mod sys;
 
 #[cfg(feature = "rust_allocator")]
 use alloc::heap;
+use std::collections::HashMap;
 use std::os::raw::c_void;
 use sys::*;
 
@@ -441,7 +442,8 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> sys::Struct_nk_allocat
 #[cfg(feature = "rust_allocator")]
 #[derive(Default)]
 pub struct RustAllocator {
-    bytes_allocated: usize
+    /// Map of alloc locations to number of bytes allocated
+    allocations: HashMap<*mut c_void, usize>
 }
 
 #[cfg(feature = "rust_allocator")]
@@ -450,18 +452,20 @@ const ALIGN: usize = 4;
 #[cfg(feature = "rust_allocator")]
 impl Allocator for RustAllocator {
     unsafe fn allocate(&mut self, old_pointer: *mut c_void, size: usize) -> *mut c_void {
-        let allocation = if self.bytes_allocated == 0 {
-            heap::allocate(size as usize, ALIGN)
+        let allocation = if old_pointer.is_null() || !self.allocations.contains_key(&old_pointer) {
+            heap::allocate(size as usize, ALIGN) as *mut c_void
         } else {
-            heap::reallocate(old_pointer as *mut u8, self.bytes_allocated, size, ALIGN)
+            let old_alloced = self.allocations.remove(&old_pointer).unwrap();
+            heap::reallocate(old_pointer as *mut u8, old_alloced, size, ALIGN) as *mut c_void
         };
-        self.bytes_allocated = size;
-        allocation as *mut _
+        self.allocations.insert(allocation, size);
+        allocation
     }
 
     unsafe fn deallocate(&mut self, pointer: *mut c_void) {
-        heap::deallocate(pointer as *mut u8, self.bytes_allocated as usize, ALIGN);
-        self.bytes_allocated = 0;
+        if let Some(bytes_allocated) = self.allocations.remove(&pointer) {
+            heap::deallocate(pointer as *mut u8, bytes_allocated as usize, ALIGN);
+        }
     }
 }
 
@@ -506,10 +510,10 @@ fn test_rust_allocation() {
     let alloced = unsafe {
         allocator.allocate(ptr::null_mut(), 20)
     };
-    assert_eq!(allocator.bytes_allocated, 20);
+    assert_eq!(*allocator.allocations.get(&alloced).unwrap(), 20);
 
     unsafe { allocator.deallocate(alloced) };
-    assert_eq!(allocator.bytes_allocated, 0);
+    assert_eq!(*allocator.allocations.get(&alloced).unwrap(), 0);
 }
 
 #[test]
