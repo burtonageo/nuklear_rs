@@ -561,13 +561,19 @@ fn test_rust_allocation() {
 fn test_raw_allocation() {
     use std::ptr;
     let mut allocator = RustAllocator::default();
-    let raw_alloc = into_raw_allocator(&mut allocator);
-
     let alloced = unsafe {
+        let raw_alloc = into_raw_allocator(&mut allocator);
         (raw_alloc.alloc.unwrap())(raw_alloc.userdata, ptr::null_mut(), 32)
     };
 
-    unsafe { (raw_alloc.free.unwrap())(raw_alloc.userdata, alloced) };
+    assert_eq!(*allocator.allocations.get(&alloced).unwrap(), 32);
+
+    unsafe {
+        let raw_alloc = into_raw_allocator(&mut allocator);
+        (raw_alloc.free.unwrap())(raw_alloc.userdata, alloced)
+    }
+
+    assert!(allocator.allocations.get(&alloced).is_none());
 }
 
 #[derive(Debug, Default)]
