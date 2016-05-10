@@ -417,14 +417,14 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> sys::Struct_nk_allocat
                                      old_pointer: *mut c_void,
                                      size: sys::nk_size) -> *mut c_void
         where A: Allocator {
-        let mut allocator_struct = data.ptr() as *mut A;
-        (*allocator_struct).allocate(old_pointer, size as usize)
+        let allocator_ptr = data.ptr() as *mut A;
+        (*allocator_ptr).allocate(old_pointer, size as usize)
     }
 
     unsafe extern "C" fn deallocate<A>(mut data: sys::nk_handle, ptr: *mut c_void)
         where A: Allocator {
-        let mut allocator_struct = data.ptr() as *mut A;
-        (*allocator_struct).deallocate(ptr)
+        let allocator_ptr = data.ptr() as *mut A;
+        (*allocator_ptr).deallocate(ptr)
     }
 
     let allocate_fn: unsafe extern fn(sys::nk_handle, *mut c_void, sys::nk_size) -> *mut c_void = allocate::<A>;
