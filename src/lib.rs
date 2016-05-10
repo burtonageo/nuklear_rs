@@ -260,6 +260,22 @@ impl Into<sys::nk_handle> for Handle {
     }
 }
 
+#[test]
+fn test_handle_ptr_conversion() {
+    let arb_ptr = 12345 as *mut c_void;
+    let handle = Handle::Ptr(arb_ptr);
+    let mut raw_handle: sys::nk_handle = handle.into();
+    unsafe { assert_eq!(arb_ptr, *raw_handle.ptr() as *mut _) };
+}
+
+#[test]
+fn test_handle_int_conversion() {
+    let some_int = 19313i32;
+    let handle = Handle::from(some_int);
+    let mut raw_handle: sys::nk_handle = handle.into();
+    unsafe { assert_eq!(some_int, *raw_handle.id()) }
+}
+
 #[derive(Default)]
 pub struct Image {
     pub handle: Handle,
@@ -438,12 +454,12 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> BindLifetime<sys::Stru
                                      old_pointer: *mut c_void,
                                      size: sys::nk_size) -> *mut c_void
         where A: Allocator {
-        let allocator_ptr = data.ptr() as *mut A;
+        let allocator_ptr = (*data.ptr()) as *mut A;
         (*allocator_ptr).allocate(old_pointer, size as usize)
     }
 
     unsafe extern "C" fn deallocate<A: Allocator>(mut data: sys::nk_handle, ptr: *mut c_void) {
-        let allocator_ptr = data.ptr() as *mut A;
+        let allocator_ptr = (*data.ptr()) as *mut A;
         (*allocator_ptr).deallocate(ptr)
     }
 
@@ -464,7 +480,7 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> BindLifetime<sys::Stru
 }
 
 #[cfg(feature = "rust_allocator")]
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RustAllocator {
     /// Map of alloc locations to number of bytes allocated
     allocations: HashMap<*mut c_void, usize>
@@ -476,7 +492,6 @@ const ALIGN: usize = 4;
 #[cfg(feature = "rust_allocator")]
 impl Allocator for RustAllocator {
     unsafe fn allocate(&mut self, old_pointer: *mut c_void, size: usize) -> *mut c_void {
-        use std::ptr;
         let allocation = if old_pointer.is_null() || !self.allocations.contains_key(&old_pointer) {
             heap::allocate(size as usize, ALIGN) as *mut c_void
         } else {
@@ -541,15 +556,13 @@ fn test_rust_allocation() {
     assert!(allocator.allocations.get(&alloced).is_none());
 }
 
-// TODO: fix this
-#[ignore]
 #[test]
 #[cfg(feature = "rust_allocator")]
 fn test_raw_allocation() {
     use std::ptr;
-    const USE_TRAIT: bool = true;
     let mut allocator = RustAllocator::default();
-    let raw_alloc = if USE_TRAIT { *into_raw_allocator(&mut allocator) } else { rust_allocator() };
+    let raw_alloc = into_raw_allocator(&mut allocator);
+
     let alloced = unsafe {
         (raw_alloc.alloc.unwrap())(raw_alloc.userdata, ptr::null_mut(), 32)
     };
