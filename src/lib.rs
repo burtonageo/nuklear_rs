@@ -13,6 +13,7 @@ use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_char, c_void};
+#[cfg(test)]
 use std::ptr;
 use sys::*;
 
@@ -614,39 +615,6 @@ impl Allocator for RustAllocator {
         if let Some(bytes_allocated) = self.allocations.remove(&pointer) {
             heap::deallocate(pointer as *mut u8, bytes_allocated as usize, ALIGN);
         }
-    }
-}
-
-#[cfg(feature = "rust_allocator")]
-fn rust_allocator() -> sys::Struct_nk_allocator {
-    use alloc::heap;
-    const ALIGN: usize = 4;
-    unsafe extern "C" fn allocate(mut data: sys::nk_handle,
-                                  ptr: *mut c_void,
-                                  size: sys::nk_size)
-                                  -> *mut c_void {
-        let alloc_data = data.ptr() as *mut usize;
-        let allocation = if *alloc_data == 0 {
-            heap::allocate(size as usize, ALIGN)
-        } else {
-            heap::reallocate(ptr as *mut u8, *alloc_data as usize, size as usize, ALIGN)
-        };
-        *alloc_data = size as usize;
-        allocation as *mut _
-    }
-
-    unsafe extern "C" fn free(mut data: sys::nk_handle, ptr: *mut c_void) {
-        let allocated = *(data.ptr() as *mut usize);
-        heap::deallocate(ptr as *mut u8, allocated as usize, ALIGN)
-    }
-
-    let bytes_allocated = Box::new(0usize);
-    let data = Handle::from(Box::into_raw(bytes_allocated) as *mut _).into();
-
-    sys::Struct_nk_allocator {
-        alloc: Some(allocate),
-        free: Some(free),
-        userdata: data,
     }
 }
 
