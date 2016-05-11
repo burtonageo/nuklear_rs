@@ -11,11 +11,11 @@ fn main() {
     if cfg!(feature = "io") {
         config.define("NK_INCLUDE_STANDARD_IO", None);
     }
-    
+
     if cfg!(feature = "vertex_buffers") {
         config.define("NK_INCLUDE_VERTEX_BUFFER_OUTPUT", None);
     }
-    
+
     if cfg!(feature = "font_baking") {
         config.define("NK_INCLUDE_FONT_BAKING", None);
     }
