@@ -490,6 +490,18 @@ pub struct RustAllocator {
 const ALIGN: usize = 4;
 
 #[cfg(feature = "rust_allocator")]
+impl Drop for RustAllocator {
+    fn drop(&mut self) {
+        use std::ptr;
+        for (ptr, bytes_allocated) in self.allocations.drain() {
+            unsafe {
+                heap::deallocate(ptr as *mut u8, bytes_allocated as usize, ALIGN);
+            }
+        }
+    }
+}
+
+#[cfg(feature = "rust_allocator")]
 impl Allocator for RustAllocator {
     unsafe fn allocate(&mut self, old_pointer: *mut c_void, size: usize) -> *mut c_void {
         let allocation = if old_pointer.is_null() || !self.allocations.contains_key(&old_pointer) {
