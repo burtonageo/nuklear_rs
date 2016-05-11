@@ -857,3 +857,38 @@ convertible_enum! {
         Multiline => NK_EDIT_MULTILINE
     }
 }
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum EditTypes: Enum_nk_edit_types {
+        Simple => NK_EDIT_SIMPLE,
+        Field => NK_EDIT_FIELD,
+        Box => NK_EDIT_BOX
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum EditEvents: Enum_nk_edit_events {
+        Active => NK_EDIT_ACTIVE,
+        Inactive => NK_EDIT_INACTIVE,
+        Activated => NK_EDIT_ACTIVATED,
+        Deactivated => NK_EDIT_DEACTIVATED,
+        Committed => NK_EDIT_COMMITED
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum PanelFlags: Enum_nk_panel_flags {
+        Border => NK_WINDOW_BORDER,
+        BorderHeader => NK_WINDOW_BORDER_HEADER,
+        Moveable => NK_WINDOW_MOVABLE,
+        Scalable => NK_WINDOW_SCALABLE,
+        Closable => NK_WINDOW_CLOSABLE,
+        Minimizable => NK_WINDOW_MINIMIZABLE,
+        Dynamic => NK_WINDOW_DYNAMIC,
+        NoScrollbar => NK_WINDOW_NO_SCROLLBAR,
+        Title => NK_WINDOW_TITLE
+    }
+}
