@@ -10,8 +10,10 @@ pub mod sys;
 use alloc::heap;
 use core::marker;
 use std::collections::HashMap;
+use std::ffi::CStr;
 use std::ops::{Deref, DerefMut};
-use std::os::raw::c_void;
+use std::os::raw::{c_char, c_void};
+use std::ptr;
 use sys::*;
 
 macro_rules! convertible_enum {
@@ -95,6 +97,101 @@ pub struct Color {
     pub g: u8,
     pub b: u8,
     pub a: u8,
+}
+
+impl Color {
+    pub fn rgb(r: i32, g: i32, b: i32) -> Self {
+        unsafe { sys::nk_rgb(r, g, b).into() }
+    }
+
+    pub fn rgb_f(r: f32, g: f32, b: f32) -> Self {
+        unsafe { sys::nk_rgb_f(r, g, b).into() }
+    }
+
+    pub fn from_rgb_hex(hex: &str) -> Self {
+        unsafe { sys::nk_rgb_hex(hex.as_ptr() as *const c_char).into() }
+    }
+
+    pub fn rgba(r: i32, g: i32, b: i32, a: i32) -> Self {
+        unsafe { sys::nk_rgba(r, g, b, a).into() }
+    }
+
+    pub fn rgba_f(r: f32, g: f32, b: f32, a: f32) -> Self {
+        unsafe { sys::nk_rgba_f(r, g, b, a).into() }
+    }
+
+    pub fn from_rgba_hex(hex: &str) -> Self {
+        unsafe { sys::nk_rgba_hex(hex.as_ptr() as *const c_char).into() }
+    }
+
+    pub fn hsv(r: i32, g: i32, b: i32) -> Self {
+        unsafe { sys::nk_hsv(r, g, b).into() }
+    }
+
+    pub fn hsv_f(r: f32, g: f32, b: f32) -> Self {
+        unsafe { sys::nk_hsv_f(r, g, b).into() }
+    }
+
+    pub fn hsva(r: i32, g: i32, b: i32, a: i32) -> Self {
+        unsafe { sys::nk_hsva(r, g, b, a).into() }
+    }
+
+    pub fn hsva_f(r: f32, g: f32, b: f32, a: f32) -> Self {
+        unsafe { sys::nk_hsva_f(r, g, b, a).into() }
+    }
+
+    pub fn rgb_hex(&self) -> &str {
+        let raw_col: sys::Struct_nk_color = (*self).into();
+        let mut string: [c_char; 6] = [0; 6];
+        unsafe {
+            sys::nk_color_hex_rgb(string.as_mut_ptr(), raw_col);
+            CStr::from_ptr(string.as_ptr()).to_str().unwrap()
+        }
+    }
+
+    pub fn rgba_hex(&self) -> &str {
+        let raw_col: sys::Struct_nk_color = (*self).into();
+        let mut string: [c_char; 8] = [0; 8];
+        unsafe {
+            sys::nk_color_hex_rgba(string.as_mut_ptr(), raw_col);
+            CStr::from_ptr(string.as_ptr()).to_str().unwrap()
+        }
+    }
+
+    pub fn to_hsv(self) -> Color {
+        let mut out_color = Color::default();
+        unsafe { sys::nk_color_hsv_b(&mut out_color.r, &mut out_color.g, &mut out_color.b, self.into()) }
+        out_color
+    }
+
+    pub fn to_hsva(self) -> Color {
+        let mut out_color = Color::default();
+        unsafe {
+            sys::nk_color_hsva_b(&mut out_color.r, &mut out_color.g, &mut out_color.b, &mut out_color.a, self.into())
+        }
+        out_color
+    }
+}
+
+impl Into<u32> for Color {
+    fn into(self) -> u32 {
+        let raw_col: sys::Struct_nk_color = self.into();
+        unsafe { sys::nk_color_u32(raw_col) as u32 }
+    }
+}
+
+impl Into<[f32; 4]> for Color {
+    fn into(self) -> [f32; 4] {
+        let (mut r, mut g, mut b, mut a) = Default::default();
+        unsafe { nk_color_f(&mut r, &mut g, &mut b, &mut a, self.into()) }
+        [r, g, b, a]
+    }
+}
+
+impl Into<[u8; 4]> for Color {
+    fn into(self) -> [u8; 4] {
+        [self.r, self.g, self.b, self.a]
+    }
 }
 
 impl From<sys::Struct_nk_color> for Color {
@@ -492,7 +589,6 @@ const ALIGN: usize = 4;
 #[cfg(feature = "rust_allocator")]
 impl Drop for RustAllocator {
     fn drop(&mut self) {
-        use std::ptr;
         for (ptr, bytes_allocated) in self.allocations.drain() {
             unsafe {
                 heap::deallocate(ptr as *mut u8, bytes_allocated as usize, ALIGN);
@@ -557,7 +653,6 @@ fn rust_allocator() -> sys::Struct_nk_allocator {
 #[test]
 #[cfg(feature = "rust_allocator")]
 fn test_rust_allocation() {
-    use std::ptr;
     let mut allocator = RustAllocator::default();
     let alloced = unsafe {
         allocator.allocate(ptr::null_mut(), 20)
@@ -571,7 +666,6 @@ fn test_rust_allocation() {
 #[test]
 #[cfg(feature = "rust_allocator")]
 fn test_raw_allocation() {
-    use std::ptr;
     let mut allocator = RustAllocator::default();
     let alloced = unsafe {
         let raw_alloc = into_raw_allocator(&mut allocator);
@@ -668,7 +762,7 @@ convertible_enum! {
         None => NK_KEY_NONE,
         Shift => NK_KEY_SHIFT,
         Ctrl => NK_KEY_CTRL,
-        Delete => NK_KEY_DEL, 
+        Delete => NK_KEY_DEL,
         Enter => NK_KEY_ENTER,
         Tab => NK_KEY_TAB,
         Backspace => NK_KEY_BACKSPACE,
