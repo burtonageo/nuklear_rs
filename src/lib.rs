@@ -2,6 +2,8 @@
 
 #[cfg(feature = "rust_allocator")]
 extern crate alloc;
+#[macro_use]
+extern crate bitflags;
 extern crate core;
 
 pub mod sys;
@@ -840,22 +842,51 @@ convertible_enum! {
     }
 }
 
-convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-    pub enum EditFlags: Enum_nk_edit_flags {
-        Default => NK_EDIT_DEFAULT,
-        ReadOnly => NK_EDIT_READ_ONLY,
-        AutoSelect => NK_EDIT_AUTO_SELECT,
-        SigEnter => NK_EDIT_SIG_ENTER,
-        AllowTab => NK_EDIT_ALLOW_TAB,
-        NoCursor => NK_EDIT_NO_CURSOR,
-        Selectable => NK_EDIT_SELECTABLE,
-        ClipBoard => NK_EDIT_CLIPBOARD,
-        CtrlEnterNewline => NK_EDIT_CTRL_ENTER_NEWLINE,
-        NoHorizontalScroll => NK_EDIT_NO_HORIZONTAL_SCROLL,
-        AlwaysInsertMode => NK_EDIT_ALWAYS_INSERT_MODE,
-        Multiline => NK_EDIT_MULTILINE
+bitflags! {
+    pub flags EditFlags: u32 {
+        const EDIT_DEFAULT = ::sys::Enum_nk_edit_flags::NK_EDIT_DEFAULT as u32,
+        const EDIT_READ_ONLY = ::sys::Enum_nk_edit_flags::NK_EDIT_READ_ONLY as u32,
+        const EDIT_AUTO_SELECT = ::sys::Enum_nk_edit_flags::NK_EDIT_AUTO_SELECT as u32,
+        const EDIT_SIG_ENTER = ::sys::Enum_nk_edit_flags::NK_EDIT_SIG_ENTER as u32,
+        const EDIT_ALLOW_TAB = ::sys::Enum_nk_edit_flags::NK_EDIT_ALLOW_TAB as u32,
+        const EDIT_NO_CURSOR = ::sys::Enum_nk_edit_flags::NK_EDIT_NO_CURSOR as u32,
+        const EDIT_SELECTABLE = ::sys::Enum_nk_edit_flags::NK_EDIT_SELECTABLE as u32,
+        const EDIT_CLIPBOARD = ::sys::Enum_nk_edit_flags::NK_EDIT_CLIPBOARD as u32,
+        const EDIT_CTRL_ENTER_NEWLINE = ::sys::Enum_nk_edit_flags::NK_EDIT_CTRL_ENTER_NEWLINE as u32,
+        const EDIT_NO_HORIZONTAL_SCROLL = ::sys::Enum_nk_edit_flags::NK_EDIT_NO_HORIZONTAL_SCROLL as u32,
+        const EDIT_ALWAYS_INSERT_MODE = ::sys::Enum_nk_edit_flags::NK_EDIT_ALWAYS_INSERT_MODE as u32,
+        const EDIT_MULTILINE = ::sys::Enum_nk_edit_flags::NK_EDIT_MULTILINE as u32
     }
+}
+
+impl From<Enum_nk_edit_flags> for EditFlags {
+    fn from(flags: Enum_nk_edit_flags) -> Self {
+        EditFlags::from_bits(flags as u32).unwrap()
+    }
+}
+
+impl Into<Enum_nk_edit_flags> for EditFlags {
+    fn into(self) -> Enum_nk_edit_flags {
+        match self {
+            EDIT_DEFAULT => Enum_nk_edit_flags::NK_EDIT_DEFAULT,
+            EDIT_READ_ONLY => Enum_nk_edit_flags::NK_EDIT_READ_ONLY,
+            EDIT_AUTO_SELECT => Enum_nk_edit_flags::NK_EDIT_AUTO_SELECT,
+            EDIT_SIG_ENTER => Enum_nk_edit_flags::NK_EDIT_SIG_ENTER,
+            EDIT_ALLOW_TAB => Enum_nk_edit_flags::NK_EDIT_ALLOW_TAB,
+            EDIT_NO_CURSOR => Enum_nk_edit_flags::NK_EDIT_NO_CURSOR,
+            EDIT_SELECTABLE => Enum_nk_edit_flags::NK_EDIT_SELECTABLE,
+            EDIT_CLIPBOARD => Enum_nk_edit_flags::NK_EDIT_CLIPBOARD,
+            EDIT_CTRL_ENTER_NEWLINE => Enum_nk_edit_flags::NK_EDIT_CTRL_ENTER_NEWLINE,
+            EDIT_NO_HORIZONTAL_SCROLL => Enum_nk_edit_flags::NK_EDIT_NO_HORIZONTAL_SCROLL,
+            EDIT_ALWAYS_INSERT_MODE => Enum_nk_edit_flags::NK_EDIT_ALWAYS_INSERT_MODE,
+            EDIT_MULTILINE => Enum_nk_edit_flags::NK_EDIT_MULTILINE,
+            _ => unreachable!()
+        }
+    }
+}
+
+impl Into<u32> for EditFlags {
+    fn into(self) -> u32 { self.bits() }
 }
 
 convertible_enum! {
@@ -867,15 +898,37 @@ convertible_enum! {
     }
 }
 
-convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-    pub enum EditEvents: Enum_nk_edit_events {
-        Active => NK_EDIT_ACTIVE,
-        Inactive => NK_EDIT_INACTIVE,
-        Activated => NK_EDIT_ACTIVATED,
-        Deactivated => NK_EDIT_DEACTIVATED,
-        Committed => NK_EDIT_COMMITED
+bitflags! {
+    pub flags EditEvents: u32 {
+        const EDIT_ACTIVE = ::sys::Enum_nk_edit_events::NK_EDIT_ACTIVE as u32,
+        const EDIT_INACTIVE = ::sys::Enum_nk_edit_events::NK_EDIT_INACTIVE as u32,
+        const EDIT_ACTIVATED = ::sys::Enum_nk_edit_events::NK_EDIT_ACTIVATED as u32,
+        const EDIT_DEACTIVATED = ::sys::Enum_nk_edit_events::NK_EDIT_DEACTIVATED as u32,
+        const EDIT_COMMITTED = ::sys::Enum_nk_edit_events::NK_EDIT_COMMITED as u32
     }
+}
+
+impl From<Enum_nk_edit_events> for EditEvents {
+    fn from(events: Enum_nk_edit_events) -> Self {
+        EditEvents::from_bits(events as u32).unwrap()
+    }
+}
+
+impl Into<Enum_nk_edit_events> for EditEvents {
+    fn into(self) -> Enum_nk_edit_events {
+        match self {
+            EDIT_ACTIVE => Enum_nk_edit_events::NK_EDIT_ACTIVE,
+            EDIT_INACTIVE => Enum_nk_edit_events::NK_EDIT_INACTIVE,
+            EDIT_ACTIVATED => Enum_nk_edit_events::NK_EDIT_ACTIVATED,
+            EDIT_DEACTIVATED => Enum_nk_edit_events::NK_EDIT_DEACTIVATED,
+            EDIT_COMMITTED => Enum_nk_edit_events::NK_EDIT_COMMITED,
+            _ => unreachable!()
+        }
+    }
+}
+
+impl Into<u32> for EditEvents {
+    fn into(self) -> u32 { self.bits() }
 }
 
 convertible_enum! {
