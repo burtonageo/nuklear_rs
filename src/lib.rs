@@ -806,15 +806,14 @@ convertible_enum! {
     }
 }
 
-convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-    pub enum TextAlign: Enum_nk_text_align {
-        Left => NK_TEXT_ALIGN_LEFT,
-        Centered => NK_TEXT_ALIGN_CENTERED,
-        Right => NK_TEXT_ALIGN_RIGHT,
-        Top => NK_TEXT_ALIGN_TOP,
-        Middle => NK_TEXT_ALIGN_MIDDLE,
-        Bottom => NK_TEXT_ALIGN_BOTTOM
+convertible_flags! {
+    pub flags TextAlign: Enum_nk_text_align = u32 {
+        TEXT_ALIGN_LEFT => ::sys::Enum_nk_text_align::NK_TEXT_ALIGN_LEFT,
+        TEXT_ALIGN_CENTERED => ::sys::Enum_nk_text_align::NK_TEXT_ALIGN_CENTERED,
+        TEXT_ALIGN_RIGHT => ::sys::Enum_nk_text_align::NK_TEXT_ALIGN_RIGHT,
+        TEXT_ALIGN_TOP => ::sys::Enum_nk_text_align::NK_TEXT_ALIGN_TOP,
+        TEXT_ALIGN_MIDDLE => ::sys::Enum_nk_text_align::NK_TEXT_ALIGN_MIDDLE,
+        TEXT_ALIGN_BOTTOM => ::sys::Enum_nk_text_align::NK_TEXT_ALIGN_BOTTOM
     }
 }
 
