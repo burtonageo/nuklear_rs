@@ -863,8 +863,7 @@ convertible_flags! {
     }
 }
 
-convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+convertible_flags! {
     pub flags PanelFlags: Enum_nk_panel_flags = u32 {
         WINDOW_BORDER => ::sys::Enum_nk_panel_flags::NK_WINDOW_BORDER,
         WINDOW_BORDER_HEADER => ::sys::Enum_nk_panel_flags::NK_WINDOW_BORDER_HEADER,
