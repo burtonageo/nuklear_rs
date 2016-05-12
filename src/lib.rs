@@ -865,15 +865,15 @@ convertible_flags! {
 
 convertible_enum! {
     #[derive(Clone, Copy, Debug, Eq, PartialEq)]
-    pub enum PanelFlags: Enum_nk_panel_flags {
-        Border => NK_WINDOW_BORDER,
-        BorderHeader => NK_WINDOW_BORDER_HEADER,
-        Moveable => NK_WINDOW_MOVABLE,
-        Scalable => NK_WINDOW_SCALABLE,
-        Closable => NK_WINDOW_CLOSABLE,
-        Minimizable => NK_WINDOW_MINIMIZABLE,
-        Dynamic => NK_WINDOW_DYNAMIC,
-        NoScrollbar => NK_WINDOW_NO_SCROLLBAR,
-        Title => NK_WINDOW_TITLE
+    pub flags PanelFlags: Enum_nk_panel_flags = u32 {
+        WINDOW_BORDER => ::sys::Enum_nk_panel_flags::NK_WINDOW_BORDER,
+        WINDOW_BORDER_HEADER => ::sys::Enum_nk_panel_flags::NK_WINDOW_BORDER_HEADER,
+        WINDOW_MOVEABLE => ::sys::Enum_nk_panel_flags::NK_WINDOW_MOVABLE,
+        WINDOW_SCALABLE => ::sys::Enum_nk_panel_flags::NK_WINDOW_SCALABLE,
+        WINDOW_CLOSEABLE => ::sys::Enum_nk_panel_flags::NK_WINDOW_CLOSABLE,
+        WINDOW_MINIMIZABLE => ::sys::Enum_nk_panel_flags::NK_WINDOW_MINIMIZABLE,
+        WINDOW_DYNAMIC => ::sys::Enum_nk_panel_flags::NK_WINDOW_DYNAMIC,
+        WINDOW_NO_SCROLLBAR => ::sys::Enum_nk_panel_flags::NK_WINDOW_NO_SCROLLBAR,
+        WINDOW_TITLE => ::sys::Enum_nk_panel_flags::NK_WINDOW_TITLE
     }
 }
