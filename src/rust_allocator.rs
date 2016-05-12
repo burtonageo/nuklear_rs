@@ -1,8 +1,6 @@
 use alloc::heap;
 use std::collections::HashMap;
 use std::os::raw::c_void;
-#[cfg(test)]
-use std::ptr;
 use Allocator;
 
 #[derive(Default, Debug)]
@@ -42,33 +40,40 @@ impl Allocator for RustAllocator {
     }
 }
 
-#[test]
-fn test_rust_allocation() {
-    let mut allocator = RustAllocator::default();
-    let alloced = unsafe {
-        allocator.allocate(ptr::null_mut(), 20)
-    };
-    assert_eq!(*allocator.allocations.get(&alloced).unwrap(), 20);
+#[cfg(test)]
+mod tests {
+    use std::ptr;
+    use super::*;
+    use ::Allocator;
 
-    unsafe { allocator.deallocate(alloced) };
-    assert!(allocator.allocations.get(&alloced).is_none());
-}
-
-#[test]
-fn test_raw_allocation() {
-    use into_raw_allocator;
-    let mut allocator = RustAllocator::default();
-    let alloced = unsafe {
-        let raw_alloc = into_raw_allocator(&mut allocator);
-        (raw_alloc.alloc.unwrap())(raw_alloc.userdata, ptr::null_mut(), 32)
-    };
-
-    assert_eq!(*allocator.allocations.get(&alloced).unwrap(), 32);
-
-    unsafe {
-        let raw_alloc = into_raw_allocator(&mut allocator);
-        (raw_alloc.free.unwrap())(raw_alloc.userdata, alloced)
+    #[test]
+    fn test_rust_allocation() {
+        let mut allocator = RustAllocator::default();
+        let alloced = unsafe {
+            allocator.allocate(ptr::null_mut(), 20)
+        };
+        assert_eq!(*allocator.allocations.get(&alloced).unwrap(), 20);
+    
+        unsafe { allocator.deallocate(alloced) };
+        assert!(allocator.allocations.get(&alloced).is_none());
     }
-
-    assert!(allocator.allocations.get(&alloced).is_none());
+    
+    #[test]
+    fn test_raw_allocation() {
+        use into_raw_allocator;
+        let mut allocator = RustAllocator::default();
+        let alloced = unsafe {
+            let raw_alloc = into_raw_allocator(&mut allocator);
+            (raw_alloc.alloc.unwrap())(raw_alloc.userdata, ptr::null_mut(), 32)
+        };
+    
+        assert_eq!(*allocator.allocations.get(&alloced).unwrap(), 32);
+    
+        unsafe {
+            let raw_alloc = into_raw_allocator(&mut allocator);
+            (raw_alloc.free.unwrap())(raw_alloc.userdata, alloced)
+        }
+    
+        assert!(allocator.allocations.get(&alloced).is_none());
+    }
 }
