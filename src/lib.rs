@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "use_bindgen_plugin", feature(plugin))]
 #![cfg_attr(feature = "rust_allocator", feature(alloc, heap_api))]
+#[feature(cstr_from_bytes)]
 
 #[cfg(feature = "rust_allocator")]
 extern crate alloc;
@@ -20,7 +21,7 @@ pub use rust_allocator::RustAllocator;
 use core::marker;
 use std::ffi::CStr;
 use std::ops::{Deref, DerefMut};
-use std::os::raw::{c_char, c_void};
+use std::os::raw::{c_char, c_int, c_void};
 use sys::*;
 
 #[cfg(not(feature = "use_bindgen_plugin"))]
@@ -106,7 +107,7 @@ macro_rules! convertible_flags {
                 $($(#[arm_attrs])* const $arm = $other),*
             }
         }
-    
+
         convertible_flags!(@_impl conversion from flags_nm to $convert {
             $($arm => $other),*
         });
@@ -886,5 +887,91 @@ convertible_flags! {
         WINDOW_DYNAMIC => ::sys::Enum_nk_panel_flags::NK_WINDOW_DYNAMIC,
         WINDOW_NO_SCROLLBAR => ::sys::Enum_nk_panel_flags::NK_WINDOW_NO_SCROLLBAR,
         WINDOW_TITLE => ::sys::Enum_nk_panel_flags::NK_WINDOW_TITLE
+    }
+}
+
+// TODO(burtonageo): Flesh this out
+pub struct MemoryStatus;
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum AllocationType: Enum_nk_allocation_type {
+        Fixed => NK_BUFFER_FIXED,
+        Dynamic => NK_BUFFER_DYNAMIC
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum BufferAllocationType: Enum_nk_buffer_allocation_type {
+        Front => NK_BUFFER_FRONT,
+        Back => NK_BUFFER_BACK,
+        Max => NK_BUFFER_MAX
+    }
+}
+
+// TODO(burtonageo): Flesh this out
+pub struct BufferMarker {
+    active: i32,
+    offset: usize
+}
+
+pub trait Clipboard {
+    fn copy(&mut self, &str);
+    fn paste_to(&mut self, &mut TextEdit);
+}
+
+fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Struct_nk_clipboard> {
+    unsafe extern "C" fn copy<C>(mut data: sys::nk_handle,
+                                 chars: *const c_char,
+                                 len: c_int)
+                                 where C: Clipboard {
+        use std::slice;
+        let bytes = unsafe { slice::from_raw_parts(chars as *const u8, len as usize) };
+        let text = CStr::from_bytes_with_nul(bytes).unwrap();
+        let clipboard_ptr = (*data.ptr()) as *mut C;
+        (*clipboard_ptr).copy(&text.to_string_lossy())
+    }
+
+    unsafe extern "C" fn paste<C: Clipboard>(mut data: sys::nk_handle, text_edit: *mut Struct_nk_text_edit) {
+        let clipboard_ptr = (*data.ptr()) as *mut C;
+        (*clipboard_ptr).paste_to(&mut TextEdit::from(text_edit))
+    }
+
+    let copy_fn: unsafe extern fn(sys::nk_handle, *const c_char, c_int) = copy::<C>;
+    let paste_fn: unsafe extern fn(sys::nk_handle, *mut Struct_nk_text_edit) = paste::<C>;
+    let clipboard_data: *mut c_void = (clipboard as *mut C) as *mut _;
+
+    let raw_clipboard = sys::Struct_nk_clipboard {
+        userdata: Handle::Ptr(clipboard_data).into(),
+        copy: Some(copy_fn),
+        paste: Some(paste_fn)
+    };
+
+    BindLifetime {
+        data: raw_clipboard,
+        marker: marker::PhantomData
+    }
+}
+
+// TODO(burtonageo): ^^^^^
+pub struct TextUndoRecord;
+
+// TODO(burtonageo): ^^^^^
+pub struct TextUndoState;
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum TextEditType: Enum_nk_text_edit_type {
+        SingleLine => NK_TEXT_EDIT_SINGLE_LINE,
+        MultiLine => NK_TEXT_EDIT_MULTI_LINE
+    }
+}
+
+pub struct TextEdit;
+
+impl From<*mut Struct_nk_text_edit> for TextEdit {
+    fn from(raw_edit: *mut Struct_nk_text_edit) -> Self {
+        TextEdit
     }
 }
