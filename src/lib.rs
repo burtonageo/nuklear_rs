@@ -1,12 +1,15 @@
+#![cfg_attr(feature = "use_bindgen_plugin", feature(plugin))]
 #![cfg_attr(feature = "rust_allocator", feature(alloc, heap_api))]
 
 #[cfg(feature = "rust_allocator")]
 extern crate alloc;
+#[cfg(feature = "use_bindgen_plugin")]
+#[macro_use]
+#[plugin]
+extern crate bindgen_plugin;
 #[macro_use]
 extern crate bitflags;
 extern crate core;
-
-pub mod sys;
 
 #[cfg(feature = "rust_allocator")]
 mod rust_allocator;
@@ -19,6 +22,16 @@ use std::ffi::CStr;
 use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_char, c_void};
 use sys::*;
+
+#[cfg(not(feature = "use_bindgen_plugin"))]
+pub mod sys;
+
+#[cfg(feature = "use_bindgen_plugin")]
+#[cfg_attr(rustfmt, rustfmt_skip)]
+#[allow(dead_code, uppercase_variables, non_camel_case_types, non_snake_case)]
+pub mod sys {
+    bindgen!("../nuklear/nuklear.h", match = "nuklear.h", link_static = "nuklear");
+}
 
 macro_rules! convertible_enum {
     ($(#[$top_lvl_attrs:meta])* pub enum $enum_nm:ident : $convert:ident {
