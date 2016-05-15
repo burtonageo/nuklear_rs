@@ -1,6 +1,6 @@
 #![cfg_attr(feature = "use_bindgen_plugin", feature(plugin))]
 #![cfg_attr(feature = "rust_allocator", feature(alloc, heap_api))]
-#[feature(cstr_from_bytes)]
+#![feature(cstr_from_bytes)]
 
 #[cfg(feature = "rust_allocator")]
 extern crate alloc;
@@ -951,6 +951,42 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Stru
     BindLifetime {
         data: raw_clipboard,
         marker: marker::PhantomData
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::raw::c_int;
+
+    #[derive(Default)]
+    struct TestClipboard(String);
+
+    impl Clipboard for TestClipboard {
+        fn copy(&mut self, text: &str) {
+            self.0 = text.to_string();
+        }
+
+        fn paste_to(&mut self, _destination: &mut TextEdit) {
+            unimplemented!();
+        }
+    }
+
+    #[test]
+    fn test_copy_clipboard() {
+        const TEXT_0: &'static str = "Hello, world\0";
+        let mut clip = TestClipboard::default();
+
+        {
+            let raw_clip = super::into_raw_clipboard(&mut clip);
+            let (txt_ptr, txt_len) = (TEXT_0.as_ptr() as *const _, TEXT_0.len() as c_int);
+            unsafe {
+                (raw_clip.copy.unwrap())(raw_clip.userdata, txt_ptr, txt_len);
+            }
+        }
+
+        // Nul byte isn't copied
+        assert_eq!(&clip.0[..], &TEXT_0[0 .. TEXT_0.len() - 1]);
     }
 }
 
