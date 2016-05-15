@@ -432,20 +432,25 @@ impl Into<sys::nk_handle> for Handle {
     }
 }
 
-#[test]
-fn test_handle_ptr_conversion() {
-    let arb_ptr = 12345 as *mut c_void;
-    let handle = Handle::Ptr(arb_ptr);
-    let mut raw_handle: sys::nk_handle = handle.into();
-    unsafe { assert_eq!(arb_ptr, *raw_handle.ptr() as *mut _) };
-}
+#[cfg(test)]
+mod handle_tests {
+    use super::*;
 
-#[test]
-fn test_handle_int_conversion() {
-    let some_int = 19313i32;
-    let handle = Handle::from(some_int);
-    let mut raw_handle: sys::nk_handle = handle.into();
-    unsafe { assert_eq!(some_int, *raw_handle.id()) }
+    #[test]
+    fn test_handle_ptr_conversion() {
+        let arb_ptr = 12345 as *mut _;
+        let handle = Handle::Ptr(arb_ptr);
+        let mut raw_handle: sys::nk_handle = handle.into();
+        unsafe { assert_eq!(arb_ptr, *raw_handle.ptr() as *mut _) };
+    }
+
+    #[test]
+    fn test_handle_int_conversion() {
+        let some_int = 19313i32;
+        let handle = Handle::from(some_int);
+        let mut raw_handle: sys::nk_handle = handle.into();
+        unsafe { assert_eq!(some_int, *raw_handle.id()) }
+    }
 }
 
 #[derive(Default)]
@@ -955,7 +960,7 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Stru
 }
 
 #[cfg(test)]
-mod tests {
+mod clipboard_tests {
     use super::*;
     use std::os::raw::c_int;
 
