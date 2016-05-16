@@ -1042,7 +1042,7 @@ impl<A: Allocator, C: Clipboard> Drop for TextEdit<A, C> {
 }
 
 impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
-    fn new<'a>(mut allocator: Arc<Mutex<A>>, clipboard: Arc<Mutex<C>>, initial_text: String)
+    pub fn new<'a>(mut allocator: Arc<Mutex<A>>, clipboard: Arc<Mutex<C>>, initial_text: String)
                -> Result<Self, TextEditError> {
         let mut raw_edit = Struct_nk_text_edit::default();
         let mut raw_alloc = try!(Arc::get_mut(&mut allocator)
@@ -1061,7 +1061,7 @@ impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
         })
     }
 
-    fn is_active(&self) -> bool {
+    pub fn is_active(&self) -> bool {
         unimplemented!();
     }
 }
