@@ -10,7 +10,6 @@ extern crate alloc;
 extern crate bindgen_plugin;
 #[macro_use]
 extern crate bitflags;
-extern crate core;
 
 #[cfg(feature = "rust_allocator")]
 mod rust_allocator;
@@ -18,10 +17,12 @@ mod rust_allocator;
 #[cfg(feature = "rust_allocator")]
 pub use rust_allocator::RustAllocator;
 
-use core::marker;
 use std::ffi::CStr;
+use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_char, c_int, c_void};
+use std::ptr::copy;
+use std::sync::{Arc, Mutex, PoisonError};
 use sys::*;
 
 #[cfg(not(feature = "use_bindgen_plugin"))]
@@ -611,7 +612,7 @@ pub trait Allocator {
 
 struct BindLifetime<'a, T> {
     data: T,
-    marker: marker::PhantomData<&'a mut ()>
+    marker: PhantomData<&'a mut ()>
 }
 
 impl<'a, T> Deref for BindLifetime<'a, T> {
@@ -657,7 +658,7 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> BindLifetime<sys::Stru
 
     BindLifetime {
         data: raw_alloc,
-        marker: marker::PhantomData
+        marker: PhantomData
     }
 }
 
@@ -900,6 +901,24 @@ convertible_flags! {
     }
 }
 
+fn create_nk_string<A: Allocator>(allocator: &mut A, string: &str) -> sys::Struct_nk_str {
+    let mut raw_alloc = into_raw_allocator(allocator);
+    let mut raw_string = sys::Struct_nk_str::default();
+    unsafe {
+        sys::nk_str_init(&mut raw_string, &mut *raw_alloc, string.len() as nk_size);
+    }
+    copy_to_nk_string(&mut raw_string, &string);
+    raw_string
+}
+
+fn copy_to_nk_string(nk_string: &mut sys::Struct_nk_str, string: &str) {
+    assert!(nk_string.len > string.len() as c_int);
+    nk_string.len = string.len() as c_int;
+    unsafe {
+        copy(string.as_ptr(), nk_string.buffer.memory.ptr as *mut _, string.len());
+    }
+}
+
 // TODO(burtonageo): Flesh this out
 pub struct MemoryStatus;
 
@@ -928,7 +947,7 @@ pub struct BufferMarker {
 
 pub trait Clipboard {
     fn copy(&mut self, &str);
-    fn paste_to(&mut self, &mut TextEdit);
+    fn get_paste_text(&self) -> &str;
 }
 
 fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Struct_nk_clipboard> {
@@ -944,8 +963,8 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Stru
     }
 
     unsafe extern "C" fn paste<C: Clipboard>(mut data: sys::nk_handle, text_edit: *mut Struct_nk_text_edit) {
-        let clipboard_ptr = (*data.ptr()) as *mut C;
-        (*clipboard_ptr).paste_to(&mut TextEdit::from(text_edit))
+        let _clipboard_ptr = (*data.ptr()) as *mut C;
+        unimplemented!();
     }
 
     let copy_fn: unsafe extern fn(sys::nk_handle, *const c_char, c_int) = copy::<C>;
@@ -960,7 +979,7 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Stru
 
     BindLifetime {
         data: raw_clipboard,
-        marker: marker::PhantomData
+        marker: PhantomData
     }
 }
 
@@ -977,7 +996,7 @@ mod clipboard_tests {
             self.0 = text.to_string();
         }
 
-        fn paste_to(&mut self, _destination: &mut TextEdit) {
+        fn get_paste_text(&self) -> &str {
             unimplemented!();
         }
     }
@@ -1014,10 +1033,62 @@ convertible_enum! {
     }
 }
 
-pub struct TextEdit;
+#[derive(Debug)]
+pub struct TextEditError(TextEditErrorInner);
 
-impl From<*mut Struct_nk_text_edit> for TextEdit {
-    fn from(raw_edit: *mut Struct_nk_text_edit) -> Self {
-        TextEdit
+#[derive(Debug)]
+enum TextEditErrorInner {
+    ArcError,
+    MutexPoisoned
+}
+
+impl TextEditError {
+    fn arc_error() -> Self {
+        TextEditError(TextEditErrorInner::ArcError)
+    }
+}
+
+impl<Guard> From<PoisonError<Guard>> for TextEditError {
+    fn from(error: PoisonError<Guard>) -> Self {
+        TextEditError(TextEditErrorInner::MutexPoisoned)
+    }
+}
+
+pub struct TextEdit<A: Allocator, C: Clipboard> {
+    raw_edit: Struct_nk_text_edit,
+    allocator: Arc<Mutex<A>>,
+    clipboard: Arc<Mutex<C>>
+}
+
+impl<A: Allocator, C: Clipboard> Drop for TextEdit<A, C> {
+    fn drop(&mut self) {
+        unsafe {
+            nk_textedit_free(&mut self.raw_edit);
+        }
+    }
+}
+
+impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
+    fn new<'a>(mut allocator: Arc<Mutex<A>>, clipboard: Arc<Mutex<C>>, initial_text: String)
+               -> Result<Self, TextEditError> {
+        let mut raw_edit = Struct_nk_text_edit::default();
+        let mut raw_alloc = try!(Arc::get_mut(&mut allocator)
+                                     .ok_or(TextEditError::arc_error())
+                                     .and_then(|m| m.lock().map_err(From::from))
+                                     .map(|mut a| *into_raw_allocator(&mut *a)));
+
+        unsafe {
+            nk_textedit_init(&mut raw_edit, &mut raw_alloc, initial_text.len() as nk_size);
+        }
+
+        Ok(TextEdit {
+            raw_edit: raw_edit,
+            allocator: allocator,
+            clipboard: clipboard,
+        })
+    }
+
+    fn is_active(&self) -> bool {
+        unimplemented!();
     }
 }
