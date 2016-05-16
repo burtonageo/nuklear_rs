@@ -991,7 +991,7 @@ mod clipboard_tests {
         }
 
         // Nul byte isn't copied
-        assert_eq!(&clip.0[..], &TEXT_0[..TEXT_0.len() - 1]);
+        assert_eq!(&clip.0[..], &TEXT[..TEXT.len() - 1]);
     }
 }
 
