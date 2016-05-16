@@ -18,8 +18,6 @@ mod rust_allocator;
 pub use rust_allocator::RustAllocator;
 
 use std::ffi::CStr;
-use std::marker::PhantomData;
-use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr::copy;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -610,25 +608,8 @@ pub trait Allocator {
     unsafe fn deallocate(&mut self, pointer: *mut c_void);
 }
 
-struct BindLifetime<'a, T> {
-    data: T,
-    marker: PhantomData<&'a mut ()>
-}
 
-impl<'a, T> Deref for BindLifetime<'a, T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        &self.data
-    }
-}
-
-impl<'a, T> DerefMut for BindLifetime<'a, T> {
-    fn deref_mut(&mut self) -> &mut <Self as Deref>::Target {
-        &mut self.data
-    }
-}
-
-fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> BindLifetime<sys::Struct_nk_allocator> {
+fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> sys::Struct_nk_allocator {
     unsafe extern "C" fn allocate<A>(mut data: sys::nk_handle,
                                      old_pointer: *mut c_void,
                                      size: sys::nk_size) -> *mut c_void
@@ -650,15 +631,10 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> BindLifetime<sys::Stru
     let dealloc_fn: unsafe extern fn(sys::nk_handle, *mut c_void) = deallocate::<A>;
     let allocator_data: *mut c_void = (allocator as *mut A) as *mut _;
 
-    let raw_alloc = sys::Struct_nk_allocator {
+    sys::Struct_nk_allocator {
         alloc: Some(allocate_fn),
         free: Some(dealloc_fn),
         userdata: Handle::Ptr(allocator_data).into()
-    };
-
-    BindLifetime {
-        data: raw_alloc,
-        marker: PhantomData
     }
 }
 
@@ -904,9 +880,11 @@ convertible_flags! {
 fn create_nk_string<A: Allocator>(allocator: &mut A, string: &str) -> sys::Struct_nk_str {
     let mut raw_alloc = into_raw_allocator(allocator);
     let mut raw_string = sys::Struct_nk_str::default();
+
     unsafe {
-        sys::nk_str_init(&mut raw_string, &mut *raw_alloc, string.len() as nk_size);
+        sys::nk_str_init(&mut raw_string, &mut raw_alloc, string.len() as nk_size);
     }
+
     copy_to_nk_string(&mut raw_string, &string);
     raw_string
 }
@@ -950,7 +928,7 @@ pub trait Clipboard {
     fn get_paste_text(&self) -> &str;
 }
 
-fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Struct_nk_clipboard> {
+fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> sys::Struct_nk_clipboard {
     unsafe extern "C" fn copy<C>(mut data: sys::nk_handle,
                                  chars: *const c_char,
                                  len: c_int)
@@ -971,15 +949,10 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> BindLifetime<sys::Stru
     let paste_fn: unsafe extern fn(sys::nk_handle, *mut Struct_nk_text_edit) = paste::<C>;
     let clipboard_data: *mut c_void = (clipboard as *mut C) as *mut _;
 
-    let raw_clipboard = sys::Struct_nk_clipboard {
+    sys::Struct_nk_clipboard {
         userdata: Handle::Ptr(clipboard_data).into(),
         copy: Some(copy_fn),
         paste: Some(paste_fn)
-    };
-
-    BindLifetime {
-        data: raw_clipboard,
-        marker: PhantomData
     }
 }
 
@@ -1075,7 +1048,7 @@ impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
         let mut raw_alloc = try!(Arc::get_mut(&mut allocator)
                                      .ok_or(TextEditError::arc_error())
                                      .and_then(|m| m.lock().map_err(From::from))
-                                     .map(|mut a| *into_raw_allocator(&mut *a)));
+                                     .map(|mut a| into_raw_allocator(&mut *a)));
 
         unsafe {
             nk_textedit_init(&mut raw_edit, &mut raw_alloc, initial_text.len() as nk_size);
