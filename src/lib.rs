@@ -604,7 +604,8 @@ convertible_enum! {
 }
 
 pub trait Allocator {
-    unsafe fn allocate(&mut self, old_pointer: *mut c_void, size: usize) -> *mut c_void;
+    unsafe fn allocate(&mut self, size: usize) -> *mut c_void;
+    unsafe fn reallocate(&mut self, old_pointer: *mut c_void, size: usize) -> *mut c_void;
     unsafe fn deallocate(&mut self, pointer: *mut c_void);
 }
 
@@ -630,9 +631,13 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> BindLifetime<sys::Stru
     unsafe extern "C" fn allocate<A>(mut data: sys::nk_handle,
                                      old_pointer: *mut c_void,
                                      size: sys::nk_size) -> *mut c_void
-        where A: Allocator {
+                                     where A: Allocator {
         let allocator_ptr = (*data.ptr()) as *mut A;
-        (*allocator_ptr).allocate(old_pointer, size as usize)
+        if old_pointer.is_null() {
+            (*allocator_ptr).allocate(size as usize)
+        } else {
+            (*allocator_ptr).reallocate(old_pointer, size as usize)
+        }
     }
 
     unsafe extern "C" fn deallocate<A: Allocator>(mut data: sys::nk_handle, ptr: *mut c_void) {
