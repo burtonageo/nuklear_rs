@@ -8,6 +8,9 @@ build = "build.rs"
 bindgen_plugin = { git = "https://github.com/crabtw/rust-bindgen.git", optional = true }
 bitflags = "0.6"
 
+[dev-dependencies]
+glium = "0.14.0"
+
 [build-dependencies]
 gcc = "0.3"
 
