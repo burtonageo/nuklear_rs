@@ -17,7 +17,9 @@ mod rust_allocator;
 #[cfg(feature = "rust_allocator")]
 pub use rust_allocator::RustAllocator;
 
+use std::error::Error;
 use std::ffi::CStr;
+use std::fmt;
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr::copy;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -1015,6 +1017,21 @@ enum TextEditErrorInner {
     MutexPoisoned
 }
 
+impl fmt::Display for TextEditError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
+
+impl Error for TextEditError {
+    fn description(&self) -> &str {
+        match self.0 {
+            TextEditErrorInner::ArcError => "Could not get unique access to the Arc ptr",
+            TextEditErrorInner::MutexPoisoned => "The Mutex was poisoned",
+        }
+    }
+}
+
 impl TextEditError {
     fn arc_error() -> Self {
         TextEditError(TextEditErrorInner::ArcError)
@@ -1043,7 +1060,7 @@ impl<A: Allocator, C: Clipboard> Drop for TextEdit<A, C> {
 
 impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
     pub fn new<'a>(mut allocator: Arc<Mutex<A>>, clipboard: Arc<Mutex<C>>, initial_text: String)
-               -> Result<Self, TextEditError> {
+                   -> Result<Self, TextEditError> {
         let mut raw_edit = Struct_nk_text_edit::default();
         let mut raw_alloc = try!(Arc::get_mut(&mut allocator)
                                      .ok_or(TextEditError::arc_error())
