@@ -971,7 +971,7 @@ mod clipboard_tests {
         }
 
         fn get_paste_text(&self) -> &str {
-            unimplemented!();
+            &self.0
         }
     }
 
