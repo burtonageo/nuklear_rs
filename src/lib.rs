@@ -931,20 +931,19 @@ pub trait Clipboard {
 }
 
 fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> sys::Struct_nk_clipboard {
-    unsafe extern "C" fn copy<C>(mut data: sys::nk_handle,
-                                 chars: *const c_char,
-                                 len: c_int)
-                                 where C: Clipboard {
+    unsafe extern "C" fn copy<C: Clipboard>(mut data: sys::nk_handle, chars: *const c_char, len: c_int) {
         use std::slice;
-        let bytes = unsafe { slice::from_raw_parts(chars as *const u8, len as usize) };
+        let bytes = slice::from_raw_parts(chars as *const u8, len as usize);
         let text = CStr::from_bytes_with_nul(bytes).unwrap();
         let clipboard_ptr = (*data.ptr()) as *mut C;
         (*clipboard_ptr).copy(&text.to_string_lossy())
     }
 
     unsafe extern "C" fn paste<C: Clipboard>(mut data: sys::nk_handle, text_edit: *mut Struct_nk_text_edit) {
-        let _clipboard_ptr = (*data.ptr()) as *mut C;
-        unimplemented!();
+        let clipboard_ptr = (*data.ptr()) as *mut C;
+        let clipboard_text = (*clipboard_ptr).get_paste_text();
+        let (text_ptr, text_len) = (clipboard_text.as_ptr(), clipboard_text.len()); 
+        sys::nk_textedit_paste(text_edit, text_ptr as *const _, text_len as c_int);
     }
 
     let copy_fn: unsafe extern fn(sys::nk_handle, *const c_char, c_int) = copy::<C>;
