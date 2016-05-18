@@ -10,6 +10,12 @@ pub struct RustAllocator {
     allocations: HashMap<*mut c_void, usize>
 }
 
+impl RustAllocator {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
 const ALIGN: usize = 4;
 
 impl Drop for RustAllocator {
