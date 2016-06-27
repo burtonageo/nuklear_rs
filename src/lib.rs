@@ -20,6 +20,8 @@ pub use rust_allocator::RustAllocator;
 use std::error::Error;
 use std::ffi::CStr;
 use std::fmt;
+use std::marker::PhantomData;
+use std::ops::{Deref, DerefMut};
 use std::os::raw::{c_char, c_int, c_void};
 use std::ptr::copy;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -138,6 +140,33 @@ macro_rules! convertible_flags {
             }
         }
     );
+}
+
+struct LifetimeMarked<'a, T> {
+    data: T,
+    _marker: PhantomData<&'a ()>
+}
+
+impl<'a, T> From<T> for LifetimeMarked<'a, T> {
+    fn from(data: T) -> Self {
+        LifetimeMarked {
+            data: data,
+            _marker: PhantomData
+        }
+    }
+}
+
+impl<'a, T> Deref for LifetimeMarked<'a, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<'a, T> DerefMut for LifetimeMarked<'a, T> {
+    fn deref_mut(&mut self) -> &mut <Self as Deref>::Target {
+        &mut self.data
+    }
 }
 
 pub struct DrawCommand {
@@ -930,7 +959,7 @@ pub trait Clipboard {
     fn get_paste_text(&self) -> &str;
 }
 
-fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> sys::Struct_nk_clipboard {
+fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> LifetimeMarked<sys::Struct_nk_clipboard> {
     unsafe extern "C" fn copy<C: Clipboard>(mut data: sys::nk_handle, chars: *const c_char, len: c_int) {
         use std::slice;
         let bytes = slice::from_raw_parts(chars as *const u8, len as usize);
@@ -950,11 +979,11 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> sys::Struct_nk_clipboa
     let paste_fn: unsafe extern fn(sys::nk_handle, *mut Struct_nk_text_edit) = paste::<C>;
     let clipboard_data: *mut c_void = (clipboard as *mut C) as *mut _;
 
-    sys::Struct_nk_clipboard {
+    LifetimeMarked::from(sys::Struct_nk_clipboard {
         userdata: Handle::Ptr(clipboard_data).into(),
         copy: Some(copy_fn),
         paste: Some(paste_fn)
-    }
+    })
 }
 
 #[cfg(test)]
