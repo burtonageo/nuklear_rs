@@ -960,6 +960,7 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> sys::Struct_nk_clipboa
 #[cfg(test)]
 mod clipboard_tests {
     use super::*;
+    use std::sync::{Arc, Mutex};
     use std::os::raw::c_int;
 
     #[derive(Default)]
@@ -976,7 +977,7 @@ mod clipboard_tests {
     }
 
     #[test]
-    fn test_copy_clipboard() {
+    fn test_clipboard_copy() {
         const TEXT: &'static str = "Hello, world\0";
         let mut clip = TestClipboard::default();
 
@@ -990,6 +991,26 @@ mod clipboard_tests {
 
         // Nul byte isn't copied
         assert_eq!(&clip.0[..], &TEXT[..TEXT.len() - 1]);
+    }
+
+    #[test]
+    fn test_clipboard_paste() {
+        use rust_allocator::RustAllocator;
+
+        const TEXT: &'static str = "Howdy, partner!\0";
+
+        let mut clip = Arc::new(Mutex::new(TestClipboard::default()));
+        let mut alloc = Arc::new(Mutex::new(RustAllocator::new()));
+        let mut edit = TextEdit::new(alloc, clip.clone(), String::new());
+
+        {
+            let clip = &mut *Arc::get_mut(&mut clip).unwrap().lock().unwrap();
+            let mut raw_clip = super::into_raw_clipboard(clip);
+            let (txt_ptr, txt_len) = (TEXT.as_ptr() as *const _, TEXT.len() as c_int);
+            unsafe {
+                (raw_clip.copy.unwrap())(raw_clip.userdata, txt_ptr, txt_len);
+            }
+        }
     }
 }
 
@@ -1058,8 +1079,12 @@ impl<A: Allocator, C: Clipboard> Drop for TextEdit<A, C> {
 }
 
 impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
-    pub fn new<'a>(mut allocator: Arc<Mutex<A>>, clipboard: Arc<Mutex<C>>, initial_text: String)
+    pub fn new<'a>(mut allocator: Arc<Mutex<A>>, clipboard: Arc<Mutex<C>>, mut initial_text: String)
                    -> Result<Self, TextEditError> {
+        if initial_text.is_empty() {
+            initial_text.push(' ');
+        }
+
         let mut raw_edit = Struct_nk_text_edit::default();
         let mut raw_alloc = try!(Arc::get_mut(&mut allocator)
                                      .ok_or(TextEditError::arc_error())
@@ -1078,6 +1103,72 @@ impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
     }
 
     pub fn is_active(&self) -> bool {
+        unimplemented!();
+    }
+}
+
+fn btoi(b: bool) -> c_int {
+    if b { 1 } else { 0 }
+}
+
+pub struct Input<'a> {
+    context: &'a mut sys::Struct_nk_context
+}
+
+impl<'a> Input<'a> {
+    fn new(context: &'a mut sys::Struct_nk_context) -> Self {
+        unsafe {
+            sys::nk_input_begin(context);
+        }
+
+        Input {
+            context: context
+        }
+    }
+
+    pub fn motion(&mut self, x: i32, y: i32) {
+        unsafe {
+            sys::nk_input_motion(self.context, x as c_int, y as c_int);
+        }
+    }
+
+    pub fn key(&mut self, key: Key, is_down: bool) {
+        unsafe {
+            sys::nk_input_key(self.context, key.into(), btoi(is_down))
+        }
+    }
+
+    pub fn button(&mut self, button: Button, x: i32, y: i32, is_down: bool) {
+        unsafe {
+            sys::nk_input_button(self.context, button.into(), x as c_int, y as c_int, btoi(is_down))
+        }
+    }
+
+    pub fn scroll(&mut self, y: f32) {
+        unsafe {
+            sys::nk_input_scroll(self.context, y)
+        }
+    }
+
+    pub fn char(&mut self, ch: char) {
+        unimplemented!();
+    }
+}
+
+impl<'a> Drop for Input<'a> {
+    fn drop(&mut self) {
+        unimplemented!();
+    }
+}
+
+pub struct Context<A: Allocator, C: Clipboard> {
+    allocator: A,
+    clipboard: C,
+    raw: Struct_nk_context
+}
+
+impl<A: Allocator, C: Clipboard> Context<A, C> {
+    pub fn input(&mut self) -> Input {
         unimplemented!();
     }
 }
