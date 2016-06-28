@@ -22,7 +22,7 @@ use std::ffi::CStr;
 use std::fmt;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
-use std::os::raw::{c_char, c_int, c_void};
+use std::os::raw::{c_char, c_int, c_short, c_ushort, c_void};
 use std::ptr::copy;
 use std::sync::{Arc, Mutex, PoisonError};
 use sys::*;
@@ -429,7 +429,7 @@ impl Into<sys::Struct_nk_recti> for Recti {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Handle {
     Ptr(*mut c_void),
     Id(i32),
@@ -483,7 +483,7 @@ mod handle_tests {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct Image {
     pub handle: Handle,
     pub w: u16,
@@ -491,13 +491,30 @@ pub struct Image {
     pub region: [u16; 4],
 }
 
-impl Into<sys::Struct_nk_image> for Image {
-    fn into(self) -> sys::Struct_nk_image {
-        sys::Struct_nk_image {
-            handle: self.handle.into(),
+impl Image {
+    fn to_nk_image(&self) -> Struct_nk_image {
+        Struct_nk_image {
+            handle: self.handle.clone().into(),
             w: self.w,
             h: self.h,
             region: self.region,
+        }
+    }
+}
+
+impl Into<Struct_nk_image> for Image {
+    fn into(self) -> sys::Struct_nk_image {
+        self.to_nk_image()
+    }
+}
+
+impl From<Struct_nk_image> for Image {
+    fn from(mut image: Struct_nk_image) -> Self {
+        Image {
+            handle: unsafe { Handle::from(*image.handle.ptr()) },
+            w: image.w,
+            h: image.h,
+            region: image.region
         }
     }
 }
@@ -1202,5 +1219,792 @@ pub struct Context<A: Allocator, C: Clipboard> {
 impl<A: Allocator, C: Clipboard> Context<A, C> {
     pub fn input(&mut self) -> Input {
         unimplemented!();
+    }
+}
+
+pub struct Font<F: FnMut(Handle, f32, &str) -> f32> {
+    handle: Handle,
+    height: f32,
+    width: F
+}
+
+impl<F: FnMut(Handle, f32, &str) -> f32> fmt::Debug for Font<F> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Font {{ {:?}, {:?} }}", self.handle, self.height)
+    }
+}
+
+impl<F: FnMut(Handle, f32, &str) -> f32> Font<F> {
+    fn to_raw_font(&self) -> Struct_nk_user_font {
+        /*
+        unsafe extern "C" fn font_fn<F>(data: nk_handle,
+                                        h: ::std::os::raw::c_float,
+                                        text: *const ::std::os::raw::c_char,
+                                        len: ::std::os::raw::c_int) -> ::std::os::raw::c_float
+            where F: FnMut(Handle, f32, &str) -> f32
+        {
+            use std::slice;
+            let slice = slice::from_raw_parts(text as *mut u8, len as usize);
+            (data, h, str::from_utf8(slice).unwrap())
+        }
+
+        Struct_nk_user_font {
+            userdata: self.handle.to_nk_handle(),
+            height: self.height,
+            width: font_fn::<F>
+        }
+        */
+        unimplemented!()
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+    pub enum CommandType: Enum_nk_command_type {
+        Nop => NK_COMMAND_NOP,
+        Scissor => NK_COMMAND_SCISSOR,
+        Line => NK_COMMAND_LINE,
+        Curve => NK_COMMAND_CURVE,
+        Rect => NK_COMMAND_RECT,
+        RectFilled => NK_COMMAND_RECT_FILLED,
+        RectMultiColor => NK_COMMAND_RECT_MULTI_COLOR,
+        Circle => NK_COMMAND_CIRCLE,
+        CircleFilled => NK_COMMAND_CIRCLE_FILLED,
+        Arc => NK_COMMAND_ARC,
+        ArcFilled => NK_COMMAND_ARC_FILLED,
+        Triangle => NK_COMMAND_TRIANGLE,
+        TriangleFilled => NK_COMMAND_TRIANGLE_FILLED,
+        Polygon => NK_COMMAND_POLYGON,
+        PolygonFilled => NK_COMMAND_POLYGON_FILLED,
+        PolyLine => NK_COMMAND_POLYLINE,
+        Text => NK_COMMAND_TEXT,
+        Image => NK_COMMAND_IMAGE
+    }
+}
+
+impl Default for CommandType {
+    fn default() -> Self {
+        CommandType::Nop
+    }
+}
+
+#[derive(Debug)]
+pub enum Command {
+    Scissor {
+        next: usize,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16
+    },
+    Line {
+        next: usize,
+        line_thickness: u16,
+        begin: Vec2i,
+        end: Vec2i,
+        color: Color
+    },
+    Curve {
+        next: usize,
+        line_thickness: u16,
+        begin: Vec2i,
+        end: Vec2i,
+        control: (Vec2i, Vec2i),
+        color: Color
+    },
+    Rect {
+        next: usize,
+        rounding: u16,
+        line_thickness: u16,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16,
+        color: Color
+    },
+    RectFilled {
+        next: usize,
+        rounding: u16,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16,
+        color: Color
+    },
+    RectMultiColor {
+        next: usize,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16,
+        left: Color,
+        top: Color,
+        bottom: Color,
+        right: Color
+    },
+    Triangle {
+        next: usize,
+        line_thickness: u16,
+        a: Vec2i,
+        b: Vec2i,
+        c: Vec2i,
+        color: Color
+    },
+    TriangleFilled {
+        next: usize,
+        a: Vec2i,
+        b: Vec2i,
+        c: Vec2i,
+        color: Color
+    },
+    Circle {
+        next: usize,
+        x: i16,
+        y: i16,
+        line_thickness: u16,
+        w: u16,
+        h: u16,
+        color: Color
+    },
+    CircleFilled {
+        next: usize,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16,
+        color: Color
+    },
+    Arc {
+        next: usize,
+        cx: i16,
+        cy: i16,
+        r: u16,
+        line_thickness: u16,
+        arc: (f32, f32),
+        color: Color
+    },
+    ArcFilled {
+        next: usize,
+        cx: i16,
+        cy: i16,
+        r: u16,
+        arc: (f32, f32),
+        color: Color
+    },
+    Polygon {
+        next: usize,
+        color: Color,
+        line_thickness: u16,
+        points: Vec<Vec2i>
+    },
+    PolygonFilled {
+        next: usize,
+        color: Color,
+        points: Vec<Vec2i>
+    },
+    PolyLine {
+        next: usize,
+        color: Color,
+        line_thickness: u16,
+        points: Vec<Vec2i>
+    },
+    Image {
+        next: usize,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16,
+        image: Image
+    },
+    Text {
+        next: usize,
+        font: Box<Font<&'static fn(Handle, f32, &str) -> f32>>,
+        background: Color,
+        foreground: Color,
+        x: i16,
+        y: i16,
+        w: u16,
+        h: u16,
+        height: f32,
+        string: String
+    }
+}
+
+#[allow(unused_variables)]
+impl Command {
+    pub fn header(&self) -> CommandHeader {
+        CommandHeader {
+            command_type: self.command_type(),
+            next: self.next()
+        }
+    }
+
+    pub fn next(&self) -> usize {
+        match *self {
+            Command::Scissor {next, ..} => next,
+            Command::Line {next, ..} => next,
+            Command::Curve {next, ..} => next,
+            Command::Rect {next, ..} => next,
+            Command::RectFilled {next, ..} => next,
+            Command::RectMultiColor {next, ..} => next,
+            Command::Triangle {next, ..} => next,
+            Command::TriangleFilled {next, ..} => next,
+            Command::Circle {next, ..} => next,
+            Command::CircleFilled {next, ..} => next,
+            Command::Arc {next, ..} => next,
+            Command::ArcFilled {next, ..} => next,
+            Command::Polygon {next, ..} => next,
+            Command::PolygonFilled {next, ..} => next,
+            Command::PolyLine {next, ..} => next,
+            Command::Image {next, ..} => next,
+            Command::Text {next, ..} => next
+        }
+    }
+
+    pub fn command_type(&self) -> CommandType {
+        match *self {
+            Command::Scissor {..} => CommandType::Scissor,
+            Command::Line {..} => CommandType::Line,
+            Command::Curve {..} => CommandType::Curve,
+            Command::Rect {..} => CommandType::Rect,
+            Command::RectFilled {..} => CommandType::RectFilled,
+            Command::RectMultiColor {..} => CommandType::RectMultiColor,
+            Command::Triangle {..} => CommandType::Circle,
+            Command::TriangleFilled {..} => CommandType::CircleFilled,
+            Command::Circle {..} => CommandType::Arc,
+            Command::CircleFilled {..} => CommandType::ArcFilled,
+            Command::Arc {..} => CommandType::Triangle,
+            Command::ArcFilled {..} => CommandType::TriangleFilled,
+            Command::Polygon {..} => CommandType::Polygon,
+            Command::PolygonFilled {..} => CommandType::PolygonFilled,
+            Command::PolyLine {..} => CommandType::PolyLine,
+            Command::Image {..} => CommandType::Text,
+            Command::Text {..} => CommandType::Image
+        }
+    }
+
+    pub fn to_nk_scissor_command(&self) -> Option<Struct_nk_command_scissor> {
+        if let Command::Scissor {x, y, w, h, ..} = *self {
+            Some(Struct_nk_command_scissor {
+                header: self.header().into(),
+                x: x as c_short,
+                y: y as c_short,
+                w: w as c_ushort,
+                h: h as c_ushort
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_line_command(&self) -> Option<Struct_nk_command_line> {
+        if let Command::Line {line_thickness, begin, end, color, ..} = *self {
+            Some(Struct_nk_command_line {
+                header: self.header().into(),
+                line_thickness: line_thickness as c_ushort,
+                begin: begin.into(),
+                end: end.into(),
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_curve_command(&self) -> Option<Struct_nk_command_curve> {
+        if let Command::Curve {line_thickness, begin, end, control, color, ..} = *self {
+            Some(Struct_nk_command_curve {
+                header: self.header().into(),
+                line_thickness: line_thickness as c_ushort,
+                begin: begin.into(),
+                end: end.into(),
+                ctrl: [control.0.into(), control.1.into()],
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_rect_command(&self) -> Option<Struct_nk_command_rect> {
+        if let Command::Rect {rounding, line_thickness, x, y, w, h, color, ..} = *self {
+            Some(Struct_nk_command_rect {
+                header: self.header().into(),
+                rounding: rounding as c_ushort,
+                line_thickness: line_thickness as c_ushort,
+                x: x as c_short,
+                y: y as c_short,
+                w: w as c_ushort,
+                h: h as c_ushort,
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_rect_filled_command(&self) -> Option<Struct_nk_command_rect_filled> {
+        if let Command::RectFilled {rounding, x, y, w, h, color, ..} = *self {
+            Some(Struct_nk_command_rect_filled {
+                header: self.header().into(),
+                rounding: rounding as c_ushort,
+                x: x as c_short,
+                y: y as c_short,
+                w: w as c_ushort,
+                h: h as c_ushort,
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_rect_multi_color_command(&self) -> Option<Struct_nk_command_rect_multi_color> {
+        if let Command::RectMultiColor {x, y, w, h, left, top, bottom, right, ..} = *self {
+            Some(Struct_nk_command_rect_multi_color {
+                header: self.header().into(),
+                x: x as c_short,
+                y: y as c_short,
+                w: w as c_ushort,
+                h: h as c_ushort,
+                left: left.into(),
+                top: top.into(),
+                bottom: bottom.into(),
+                right: right.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_triangle_command(&self) -> Option<Struct_nk_command_triangle> {
+        if let Command::Triangle {line_thickness, a, b, c, color, ..} = *self {
+            Some(Struct_nk_command_triangle {
+                header: self.header().into(),
+                line_thickness: line_thickness as c_ushort,
+                a: a.into(),
+                b: b.into(),
+                c: c.into(),
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_triangle_filled_command(&self) -> Option<Struct_nk_command_triangle_filled> {
+        if let Command::TriangleFilled {a, b, c, color, ..} = *self {
+            Some(Struct_nk_command_triangle_filled {
+                header: self.header().into(),
+                a: a.into(),
+                b: b.into(),
+                c: c.into(),
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_circle_command(&self) -> Option<Struct_nk_command_circle> {
+        if let Command::Circle {x, y, line_thickness, w, h, color, ..} = *self {
+            Some(Struct_nk_command_circle {
+                header: self.header().into(),
+                x: x as c_short,
+                y: y as c_short,
+                line_thickness: line_thickness as c_ushort,
+                w: w as c_ushort,
+                h: h as c_ushort,
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_circle_filled_command(&self) -> Option<Struct_nk_command_circle_filled> {
+        if let Command::CircleFilled {x, y, w, h, color, ..} = *self {
+            Some(Struct_nk_command_circle_filled {
+                header: self.header().into(),
+                x: x as c_short,
+                y: y as c_short,
+                w: w as c_ushort,
+                h: h as c_ushort,
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_arc_command(&self) -> Option<Struct_nk_command_arc> {
+        if let Command::Arc {cx, cy, r, line_thickness, arc, color, ..} = *self {
+            Some(Struct_nk_command_arc {
+                header: self.header().into(),
+                cx: cx as c_short,
+                cy: cy as c_short,
+                r: r as c_ushort,
+                line_thickness: line_thickness as c_ushort,
+                a: [arc.0, arc.1],
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_arc_filled_command(&self) -> Option<Struct_nk_command_arc_filled> {
+        if let Command::ArcFilled {cx, cy, r, arc, color, ..} = *self {
+            Some(Struct_nk_command_arc_filled {
+                header: self.header().into(),
+                cx: cx as c_short,
+                cy: cy as c_short,
+                r: r as c_ushort,
+                a: [arc.0, arc.1],
+                color: color.into()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_polygon_command(&self) -> Option<Struct_nk_command_polygon> {
+        if let Command::Polygon {color, line_thickness, ref points, ..} = *self {
+            Some(Struct_nk_command_polygon {
+                header: self.header().into(),
+                color: color.into(),
+                line_thickness: line_thickness as c_ushort,
+                point_count: points.len() as c_ushort,
+                points: unimplemented!()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_polygon_filled_command(&self) -> Option<Struct_nk_command_polygon_filled> {
+        if let Command::PolygonFilled {color, ref points, ..} = *self {
+            Some(Struct_nk_command_polygon_filled {
+                header: self.header().into(),
+                color: color.into(),
+                point_count: points.len() as c_ushort,
+                points: unimplemented!()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_polyline_command(&self) -> Option<Struct_nk_command_polyline> {
+        if let Command::PolyLine {color, line_thickness, ref points, ..} = *self {
+            Some(Struct_nk_command_polyline {
+                header: self.header().into(),
+                color: color.into(),
+                line_thickness: line_thickness as c_ushort,
+                point_count: points.len() as c_ushort,
+                points: unimplemented!()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_image_command(&self) -> Option<Struct_nk_command_image> {
+        if let Command::Image {x, y, w, h, ref image, ..} = *self {
+            Some(Struct_nk_command_image {
+                header: self.header().into(),
+                x: x as c_short,
+                y: y as c_short,
+                w: w as c_ushort,
+                h: h as c_ushort,
+                img: image.to_nk_image()
+            })
+        } else {
+            None
+        }
+    }
+
+    pub fn to_nk_text_command(&self) -> Option<Struct_nk_command_text> {
+        if let Command::Text {ref font, background, foreground, x, y, w, h, height, ref string, ..} = *self {
+            Some(Struct_nk_command_text {
+                header: self.header().into(),
+                font: unimplemented!(), // font.into(),
+                background: background.into(),
+                foreground: foreground.into(),
+                x: x as c_short,
+                y: y as c_short,
+                w: w as c_ushort,
+                h: h as c_ushort,
+                height: height,
+                length: string.len() as c_int,
+                string: unimplemented!()
+            })
+        } else {
+            None
+        }
+    }
+}
+
+impl From<Struct_nk_command_scissor> for Command {
+    fn from(command: Struct_nk_command_scissor) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Scissor);
+        Command::Scissor {
+            next: command.header.next as usize,
+            x: command.x as i16,
+            y: command.y as i16,
+            w: command.w as u16,
+            h: command.h as u16
+        }
+    }
+}
+
+impl From<Struct_nk_command_line> for Command {
+    fn from(command: Struct_nk_command_line) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Line);
+        Command::Line {
+            next: command.header.next as usize,
+            line_thickness: command.line_thickness as u16,
+            begin: command.begin.into(),
+            end: command.end.into(),
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_curve> for Command {
+    fn from(command: Struct_nk_command_curve) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Curve);
+        Command::Curve {
+            next: command.header.next as usize,
+            line_thickness: command.line_thickness as u16,
+            begin: command.begin.into(),
+            end: command.end.into(),
+            control: (command.ctrl[0].into(), command.ctrl[1].into()),
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_rect> for Command {
+    fn from(command: Struct_nk_command_rect) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Rect);
+        Command::Rect {
+            next: command.header.next as usize,
+            rounding: command.rounding as u16,
+            line_thickness: command.line_thickness as u16,
+            x: command.x as i16,
+            y: command.y as i16,
+            w: command.w as u16,
+            h: command.h as u16,
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_rect_filled> for Command {
+    fn from(command: Struct_nk_command_rect_filled) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::RectFilled);
+        Command::RectFilled {
+            next: command.header.next as usize,
+            rounding: command.rounding as u16,
+            x: command.x as i16,
+            y: command.y as i16,
+            w: command.w as u16,
+            h: command.h as u16,
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_rect_multi_color> for Command {
+    fn from(command: Struct_nk_command_rect_multi_color) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::RectMultiColor);
+        Command::RectMultiColor {
+            next: command.header.next as usize,
+            x: command.x as i16,
+            y: command.y as i16,
+            w: command.w as u16,
+            h: command.h as u16,
+            left: command.left.into(),
+            top: command.top.into(),
+            bottom: command.bottom.into(),
+            right: command.right.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_triangle> for Command {
+    fn from(command: Struct_nk_command_triangle) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Triangle);
+        Command::Triangle {
+            next: command.header.next as usize,
+            line_thickness: command.line_thickness as u16,
+            a: command.a.into(),
+            b: command.b.into(),
+            c: command.c.into(),
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_triangle_filled> for Command {
+    fn from(command: Struct_nk_command_triangle_filled) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::TriangleFilled);
+        Command::TriangleFilled {
+            next: command.header.next as usize,
+            a: command.a.into(),
+            b: command.b.into(),
+            c: command.c.into(),
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_circle> for Command {
+    fn from(command: Struct_nk_command_circle) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Circle);
+        Command::Circle {
+            next: command.header.next as usize,
+            x: command.x as i16,
+            y: command.y as i16,
+            line_thickness: command.line_thickness as u16,
+            w: command.w as u16,
+            h: command.h as u16,
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_circle_filled> for Command {
+    fn from(command: Struct_nk_command_circle_filled) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::CircleFilled);
+        Command::CircleFilled {
+            next: command.header.next as usize,
+            x: command.x as i16,
+            y: command.y as i16,
+            w: command.w as u16,
+            h: command.h as u16,
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_arc> for Command {
+    fn from(command: Struct_nk_command_arc) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Arc);
+        Command::Arc {
+            next: command.header.next as usize,
+            cx: command.cx as i16,
+            cy: command.cy as i16,
+            r: command.r as u16,
+            line_thickness: command.line_thickness as u16,
+            arc: (command.a[0], command.a[1]),
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_arc_filled> for Command {
+    fn from(command: Struct_nk_command_arc_filled) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::ArcFilled);
+        Command::ArcFilled {
+            next: command.header.next as usize,
+            cx: command.cx as i16,
+            cy: command.cy as i16,
+            r: command.r as u16,
+            arc: (command.a[0], command.a[1]),
+            color: command.color.into()
+        }
+    }
+}
+
+impl From<Struct_nk_command_polygon> for Command {
+    fn from(command: Struct_nk_command_polygon) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Polygon);
+        Command::Polygon {
+            next: command.header.next as usize,
+            color: command.color.into(),
+            line_thickness: command.line_thickness as u16,
+            points: unimplemented!()
+        }
+    }
+}
+
+impl From<Struct_nk_command_polygon_filled> for Command {
+    fn from(command: Struct_nk_command_polygon_filled) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::PolygonFilled);
+        Command::PolygonFilled {
+            next: command.header.next as usize,
+            color: command.color.into(),
+            points: unimplemented!()
+        }
+    }
+}
+
+impl From<Struct_nk_command_polyline> for Command {
+    fn from(command: Struct_nk_command_polyline) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::PolyLine);
+        Command::PolyLine {
+            next: command.header.next as usize,
+            color: command.color.into(),
+            line_thickness: command.line_thickness as u16,
+            points: unimplemented!()
+        }
+    }
+}
+
+impl From<Struct_nk_command_image> for Command {
+    fn from(command: Struct_nk_command_image) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Image);
+        Command::Image {
+            next: command.header.next as usize,
+            x: command.x as i16,
+            y: command.y as i16,
+            w: command.w as u16,
+            h: command.h as u16,
+            image: From::from(command.img)
+        }
+    }
+}
+
+impl From<Struct_nk_command_text> for Command {
+    fn from(command: Struct_nk_command_text) -> Self {
+        debug_assert!(CommandType::from(command.header._type) == CommandType::Text);
+        Command::Text {
+            next: command.header.next as usize,
+            font: unimplemented!(), // command.font as Box<Font<&'static fn(Handle, f32, &str) -> f32>>,
+            background: command.background.into(),
+            foreground: command.foreground.into(),
+            x: command.x as i16,
+            y: command.y as i16,
+            w: command.w as u16,
+            h: command.h as u16,
+            height: command.height as f32,
+            string: unimplemented!() // command.string as String
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+pub struct CommandHeader {
+    pub command_type: CommandType,
+    pub next: usize
+}
+
+impl Into<Struct_nk_command> for CommandHeader {
+    fn into(self) -> Struct_nk_command {
+        Struct_nk_command {
+            _type: self.command_type.into(),
+            next: self.next as nk_size
+        }
+    }
+}
+
+impl From<Struct_nk_command> for CommandHeader {
+    fn from(command: Struct_nk_command) -> Self {
+        CommandHeader {
+            command_type: From::from(command._type),
+            next: command.next as usize
+        }
     }
 }
