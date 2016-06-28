@@ -1136,6 +1136,7 @@ impl<A: Allocator, C: Clipboard> TextEdit<A, C> {
     }
 }
 
+#[inline]
 fn btoi(b: bool) -> c_int {
     if b { 1 } else { 0 }
 }
@@ -1186,7 +1187,9 @@ impl<'a> Input<'a> {
 
 impl<'a> Drop for Input<'a> {
     fn drop(&mut self) {
-        unimplemented!();
+        unsafe {
+            sys::nk_input_end(self. context);
+        }
     }
 }
 
