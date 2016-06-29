@@ -34,7 +34,7 @@ use std::ffi::CStr;
 use std::fmt;
 use std::marker::PhantomData;
 use std::ops::{Deref, DerefMut};
-use std::os::raw::{c_char, c_int, c_short, c_ushort, c_void};
+use std::os::raw::{c_char, c_float, c_int, c_short, c_uint, c_ushort, c_void};
 use std::ptr::copy;
 use std::sync::{Arc, Mutex, PoisonError};
 use sys::*;
@@ -189,21 +189,21 @@ pub struct DrawList {
     _priv: (),
 }
 
-impl From<bool> for sys::Enum_Unnamed1 {
+impl From<bool> for Enum_Unnamed1 {
     fn from(b: bool) -> Self {
         if b {
-            sys::Enum_Unnamed1::nk_true
+            Enum_Unnamed1::nk_true
         } else {
-            sys::Enum_Unnamed1::nk_false
+            Enum_Unnamed1::nk_false
         }
     }
 }
 
-impl Into<bool> for sys::Enum_Unnamed1 {
+impl Into<bool> for Enum_Unnamed1 {
     fn into(self) -> bool {
         match self {
-            sys::Enum_Unnamed1::nk_true => true,
-            sys::Enum_Unnamed1::nk_false => false,
+            Enum_Unnamed1::nk_true => true,
+            Enum_Unnamed1::nk_false => false,
         }
     }
 }
@@ -218,73 +218,73 @@ pub struct Color {
 
 impl Color {
     pub fn rgb(r: i32, g: i32, b: i32) -> Self {
-        unsafe { sys::nk_rgb(r, g, b).into() }
+        unsafe { nk_rgb(r, g, b).into() }
     }
 
     pub fn rgb_f(r: f32, g: f32, b: f32) -> Self {
-        unsafe { sys::nk_rgb_f(r, g, b).into() }
+        unsafe { nk_rgb_f(r, g, b).into() }
     }
 
     pub fn from_rgb_hex(hex: &str) -> Self {
-        unsafe { sys::nk_rgb_hex(hex.as_ptr() as *const c_char).into() }
+        unsafe { nk_rgb_hex(hex.as_ptr() as *const c_char).into() }
     }
 
     pub fn rgba(r: i32, g: i32, b: i32, a: i32) -> Self {
-        unsafe { sys::nk_rgba(r, g, b, a).into() }
+        unsafe { nk_rgba(r, g, b, a).into() }
     }
 
     pub fn rgba_f(r: f32, g: f32, b: f32, a: f32) -> Self {
-        unsafe { sys::nk_rgba_f(r, g, b, a).into() }
+        unsafe { nk_rgba_f(r, g, b, a).into() }
     }
 
     pub fn from_rgba_hex(hex: &str) -> Self {
-        unsafe { sys::nk_rgba_hex(hex.as_ptr() as *const c_char).into() }
+        unsafe { nk_rgba_hex(hex.as_ptr() as *const c_char).into() }
     }
 
     pub fn hsv(r: i32, g: i32, b: i32) -> Self {
-        unsafe { sys::nk_hsv(r, g, b).into() }
+        unsafe { nk_hsv(r, g, b).into() }
     }
 
     pub fn hsv_f(r: f32, g: f32, b: f32) -> Self {
-        unsafe { sys::nk_hsv_f(r, g, b).into() }
+        unsafe { nk_hsv_f(r, g, b).into() }
     }
 
     pub fn hsva(r: i32, g: i32, b: i32, a: i32) -> Self {
-        unsafe { sys::nk_hsva(r, g, b, a).into() }
+        unsafe { nk_hsva(r, g, b, a).into() }
     }
 
     pub fn hsva_f(r: f32, g: f32, b: f32, a: f32) -> Self {
-        unsafe { sys::nk_hsva_f(r, g, b, a).into() }
+        unsafe { nk_hsva_f(r, g, b, a).into() }
     }
 
     pub fn rgb_hex(&self) -> &str {
-        let raw_col: sys::Struct_nk_color = (*self).into();
+        let raw_col: Struct_nk_color = (*self).into();
         let mut string: [c_char; 6] = [0; 6];
         unsafe {
-            sys::nk_color_hex_rgb(string.as_mut_ptr(), raw_col);
+            nk_color_hex_rgb(string.as_mut_ptr(), raw_col);
             CStr::from_ptr(string.as_ptr()).to_str().unwrap()
         }
     }
 
     pub fn rgba_hex(&self) -> &str {
-        let raw_col: sys::Struct_nk_color = (*self).into();
+        let raw_col: Struct_nk_color = (*self).into();
         let mut string: [c_char; 8] = [0; 8];
         unsafe {
-            sys::nk_color_hex_rgba(string.as_mut_ptr(), raw_col);
+            nk_color_hex_rgba(string.as_mut_ptr(), raw_col);
             CStr::from_ptr(string.as_ptr()).to_str().unwrap()
         }
     }
 
     pub fn to_hsv(self) -> Color {
         let mut out_color = Color::default();
-        unsafe { sys::nk_color_hsv_b(&mut out_color.r, &mut out_color.g, &mut out_color.b, self.into()) }
+        unsafe { nk_color_hsv_b(&mut out_color.r, &mut out_color.g, &mut out_color.b, self.into()) }
         out_color
     }
 
     pub fn to_hsva(self) -> Color {
         let mut out_color = Color::default();
         unsafe {
-            sys::nk_color_hsva_b(&mut out_color.r, &mut out_color.g, &mut out_color.b, &mut out_color.a, self.into())
+            nk_color_hsva_b(&mut out_color.r, &mut out_color.g, &mut out_color.b, &mut out_color.a, self.into())
         }
         out_color
     }
@@ -292,8 +292,8 @@ impl Color {
 
 impl Into<u32> for Color {
     fn into(self) -> u32 {
-        let raw_col: sys::Struct_nk_color = self.into();
-        unsafe { sys::nk_color_u32(raw_col) as u32 }
+        let raw_col: Struct_nk_color = self.into();
+        unsafe { nk_color_u32(raw_col) as u32 }
     }
 }
 
@@ -311,8 +311,8 @@ impl Into<[u8; 4]> for Color {
     }
 }
 
-impl From<sys::Struct_nk_color> for Color {
-    fn from(raw_color: sys::Struct_nk_color) -> Self {
+impl From<Struct_nk_color> for Color {
+    fn from(raw_color: Struct_nk_color) -> Self {
         Color {
             r: raw_color.r,
             g: raw_color.g,
@@ -322,9 +322,9 @@ impl From<sys::Struct_nk_color> for Color {
     }
 }
 
-impl Into<sys::Struct_nk_color> for Color {
-    fn into(self) -> sys::Struct_nk_color {
-        sys::Struct_nk_color {
+impl Into<Struct_nk_color> for Color {
+    fn into(self) -> Struct_nk_color {
+        Struct_nk_color {
             r: self.r,
             g: self.g,
             b: self.b,
@@ -339,8 +339,8 @@ pub struct Vec2 {
     pub y: f32,
 }
 
-impl From<sys::Struct_nk_vec2> for Vec2 {
-    fn from(raw_vec: sys::Struct_nk_vec2) -> Self {
+impl From<Struct_nk_vec2> for Vec2 {
+    fn from(raw_vec: Struct_nk_vec2) -> Self {
         Vec2 {
             x: raw_vec.x,
             y: raw_vec.y,
@@ -348,9 +348,9 @@ impl From<sys::Struct_nk_vec2> for Vec2 {
     }
 }
 
-impl Into<sys::Struct_nk_vec2> for Vec2 {
-    fn into(self) -> sys::Struct_nk_vec2 {
-        sys::Struct_nk_vec2 {
+impl Into<Struct_nk_vec2> for Vec2 {
+    fn into(self) -> Struct_nk_vec2 {
+        Struct_nk_vec2 {
             x: self.x,
             y: self.y,
         }
@@ -363,8 +363,8 @@ pub struct Vec2i {
     pub y: i16,
 }
 
-impl From<sys::Struct_nk_vec2i> for Vec2i {
-    fn from(raw_vec: sys::Struct_nk_vec2i) -> Self {
+impl From<Struct_nk_vec2i> for Vec2i {
+    fn from(raw_vec: Struct_nk_vec2i) -> Self {
         Vec2i {
             x: raw_vec.x,
             y: raw_vec.y,
@@ -372,9 +372,9 @@ impl From<sys::Struct_nk_vec2i> for Vec2i {
     }
 }
 
-impl Into<sys::Struct_nk_vec2i> for Vec2i {
-    fn into(self) -> sys::Struct_nk_vec2i {
-        sys::Struct_nk_vec2i {
+impl Into<Struct_nk_vec2i> for Vec2i {
+    fn into(self) -> Struct_nk_vec2i {
+        Struct_nk_vec2i {
             x: self.x,
             y: self.y,
         }
@@ -389,8 +389,8 @@ pub struct Rect {
     pub h: f32,
 }
 
-impl From<sys::Struct_nk_rect> for Rect {
-    fn from(raw_rect: sys::Struct_nk_rect) -> Self {
+impl From<Struct_nk_rect> for Rect {
+    fn from(raw_rect: Struct_nk_rect) -> Self {
         Rect {
             x: raw_rect.x,
             y: raw_rect.y,
@@ -400,9 +400,9 @@ impl From<sys::Struct_nk_rect> for Rect {
     }
 }
 
-impl Into<sys::Struct_nk_rect> for Rect {
-    fn into(self) -> sys::Struct_nk_rect {
-        sys::Struct_nk_rect {
+impl Into<Struct_nk_rect> for Rect {
+    fn into(self) -> Struct_nk_rect {
+        Struct_nk_rect {
             x: self.x,
             y: self.y,
             w: self.w,
@@ -419,8 +419,8 @@ pub struct Recti {
     pub h: i16,
 }
 
-impl From<sys::Struct_nk_recti> for Recti {
-    fn from(raw_rect: sys::Struct_nk_recti) -> Self {
+impl From<Struct_nk_recti> for Recti {
+    fn from(raw_rect: Struct_nk_recti) -> Self {
         Recti {
             x: raw_rect.x,
             y: raw_rect.y,
@@ -430,9 +430,9 @@ impl From<sys::Struct_nk_recti> for Recti {
     }
 }
 
-impl Into<sys::Struct_nk_recti> for Recti {
-    fn into(self) -> sys::Struct_nk_recti {
-        sys::Struct_nk_recti {
+impl Into<Struct_nk_recti> for Recti {
+    fn into(self) -> Struct_nk_recti {
+        Struct_nk_recti {
             x: self.x,
             y: self.y,
             w: self.w,
@@ -465,11 +465,11 @@ impl From<i32> for Handle {
     }
 }
 
-impl Into<sys::nk_handle> for Handle {
-    fn into(self) -> sys::nk_handle {
+impl Into<nk_handle> for Handle {
+    fn into(self) -> nk_handle {
         match self {
-            Handle::Ptr(ptr) => unsafe { sys::nk_handle_ptr(ptr) },
-            Handle::Id(id) => unsafe { sys::nk_handle_id(id) },
+            Handle::Ptr(ptr) => unsafe { nk_handle_ptr(ptr) },
+            Handle::Id(id) => unsafe { nk_handle_id(id) },
         }
     }
 }
@@ -482,7 +482,7 @@ mod handle_tests {
     fn test_handle_ptr_conversion() {
         let arb_ptr = 12345 as *mut _;
         let handle = Handle::Ptr(arb_ptr);
-        let mut raw_handle: sys::nk_handle = handle.into();
+        let mut raw_handle: nk_handle = handle.into();
         unsafe { assert_eq!(arb_ptr, *raw_handle.ptr() as *mut _) };
     }
 
@@ -490,7 +490,7 @@ mod handle_tests {
     fn test_handle_int_conversion() {
         let some_int = 19313i32;
         let handle = Handle::from(some_int);
-        let mut raw_handle: sys::nk_handle = handle.into();
+        let mut raw_handle: nk_handle = handle.into();
         unsafe { assert_eq!(some_int, *raw_handle.id()) }
     }
 }
@@ -515,7 +515,7 @@ impl Image {
 }
 
 impl Into<Struct_nk_image> for Image {
-    fn into(self) -> sys::Struct_nk_image {
+    fn into(self) -> Struct_nk_image {
         self.to_nk_image()
     }
 }
@@ -537,8 +537,8 @@ pub struct Scroll {
     pub y: u16,
 }
 
-impl From<sys::Struct_nk_scroll> for Scroll {
-    fn from(raw_vec: sys::Struct_nk_scroll) -> Self {
+impl From<Struct_nk_scroll> for Scroll {
+    fn from(raw_vec: Struct_nk_scroll) -> Self {
         Scroll {
             x: raw_vec.x,
             y: raw_vec.y,
@@ -546,9 +546,9 @@ impl From<sys::Struct_nk_scroll> for Scroll {
     }
 }
 
-impl Into<sys::Struct_nk_scroll> for Scroll {
-    fn into(self) -> sys::Struct_nk_scroll {
-        sys::Struct_nk_scroll {
+impl Into<Struct_nk_scroll> for Scroll {
+    fn into(self) -> Struct_nk_scroll {
+        Struct_nk_scroll {
             x: self.x,
             y: self.y,
         }
@@ -669,10 +669,10 @@ pub trait Allocator {
 }
 
 
-fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> sys::Struct_nk_allocator {
-    unsafe extern "C" fn allocate<A>(mut data: sys::nk_handle,
+fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> Struct_nk_allocator {
+    unsafe extern "C" fn allocate<A>(mut data: nk_handle,
                                      old_pointer: *mut c_void,
-                                     size: sys::nk_size) -> *mut c_void
+                                     size: nk_size) -> *mut c_void
                                      where A: Allocator {
         let allocator_ptr = (*data.ptr()) as *mut A;
         if old_pointer.is_null() {
@@ -682,16 +682,16 @@ fn into_raw_allocator<A: Allocator>(allocator: &mut A) -> sys::Struct_nk_allocat
         }
     }
 
-    unsafe extern "C" fn deallocate<A: Allocator>(mut data: sys::nk_handle, ptr: *mut c_void) {
+    unsafe extern "C" fn deallocate<A: Allocator>(mut data: nk_handle, ptr: *mut c_void) {
         let allocator_ptr = (*data.ptr()) as *mut A;
         (*allocator_ptr).deallocate(ptr)
     }
 
-    let allocate_fn: unsafe extern fn(sys::nk_handle, *mut c_void, sys::nk_size) -> *mut c_void = allocate::<A>;
-    let dealloc_fn: unsafe extern fn(sys::nk_handle, *mut c_void) = deallocate::<A>;
+    let allocate_fn: unsafe extern fn(nk_handle, *mut c_void, nk_size) -> *mut c_void = allocate::<A>;
+    let dealloc_fn: unsafe extern fn(nk_handle, *mut c_void) = deallocate::<A>;
     let allocator_data: *mut c_void = (allocator as *mut A) as *mut _;
 
-    sys::Struct_nk_allocator {
+    Struct_nk_allocator {
         alloc: Some(allocate_fn),
         free: Some(dealloc_fn),
         userdata: Handle::Ptr(allocator_data).into()
@@ -704,9 +704,9 @@ pub struct DrawNullTexture {
     pub uv: Vec2,
 }
 
-impl Into<sys::Struct_nk_draw_null_texture> for DrawNullTexture {
-    fn into(self) -> sys::Struct_nk_draw_null_texture {
-        sys::Struct_nk_draw_null_texture {
+impl Into<Struct_nk_draw_null_texture> for DrawNullTexture {
+    fn into(self) -> Struct_nk_draw_null_texture {
+        Struct_nk_draw_null_texture {
             texture: self.texture.into(),
             uv: self.uv.into(),
         }
@@ -737,10 +737,9 @@ impl Default for ConvertConfig {
     }
 }
 
-impl Into<sys::Struct_nk_convert_config> for ConvertConfig {
-    fn into(self) -> sys::Struct_nk_convert_config {
-        use std::os::raw::{c_float, c_uint};
-        sys::Struct_nk_convert_config {
+impl Into<Struct_nk_convert_config> for ConvertConfig {
+    fn into(self) -> Struct_nk_convert_config {
+        Struct_nk_convert_config {
             global_alpha: self.global_alpha as c_float,
             line_AA: self.line_aa.into(),
             shape_AA: self.shape_aa.into(),
@@ -924,7 +923,7 @@ convertible_flags! {
 }
 
 convertible_flags! {
-    pub flags PanelFlags: Enum_nk_panel_flags = u32 {
+    pub flags PanelFlags: ::sys::Enum_nk_panel_flags = u32 {
         WINDOW_BORDER => ::sys::Enum_nk_panel_flags::NK_WINDOW_BORDER,
         WINDOW_BORDER_HEADER => ::sys::Enum_nk_panel_flags::NK_WINDOW_BORDER_HEADER,
         WINDOW_MOVEABLE => ::sys::Enum_nk_panel_flags::NK_WINDOW_MOVABLE,
@@ -937,19 +936,19 @@ convertible_flags! {
     }
 }
 
-fn create_nk_string<A: Allocator>(allocator: &mut A, string: &str) -> sys::Struct_nk_str {
+fn create_nk_string<A: Allocator>(allocator: &mut A, string: &str) -> Struct_nk_str {
     let mut raw_alloc = into_raw_allocator(allocator);
-    let mut raw_string = sys::Struct_nk_str::default();
+    let mut raw_string = Struct_nk_str::default();
 
     unsafe {
-        sys::nk_str_init(&mut raw_string, &mut raw_alloc, string.len() as nk_size);
+        nk_str_init(&mut raw_string, &mut raw_alloc, string.len() as nk_size);
     }
 
     copy_to_nk_string(&mut raw_string, &string);
     raw_string
 }
 
-fn copy_to_nk_string(nk_string: &mut sys::Struct_nk_str, string: &str) {
+fn copy_to_nk_string(nk_string: &mut Struct_nk_str, string: &str) {
     assert!(nk_string.len > string.len() as c_int);
     nk_string.len = string.len() as c_int;
     unsafe {
@@ -988,8 +987,8 @@ pub trait Clipboard {
     fn get_paste_text(&self) -> &str;
 }
 
-fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> LifetimeMarked<sys::Struct_nk_clipboard> {
-    unsafe extern "C" fn copy<C: Clipboard>(mut data: sys::nk_handle, chars: *const c_char, len: c_int) {
+fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> LifetimeMarked<Struct_nk_clipboard> {
+    unsafe extern "C" fn copy<C: Clipboard>(mut data: nk_handle, chars: *const c_char, len: c_int) {
         use std::slice;
         let bytes = slice::from_raw_parts(chars as *const u8, len as usize);
         let text = CStr::from_bytes_with_nul(bytes).unwrap();
@@ -997,18 +996,18 @@ fn into_raw_clipboard<C: Clipboard>(clipboard: &mut C) -> LifetimeMarked<sys::St
         (*clipboard_ptr).copy(&text.to_string_lossy())
     }
 
-    unsafe extern "C" fn paste<C: Clipboard>(mut data: sys::nk_handle, text_edit: *mut Struct_nk_text_edit) {
+    unsafe extern "C" fn paste<C: Clipboard>(mut data: nk_handle, text_edit: *mut Struct_nk_text_edit) {
         let clipboard_ptr = (*data.ptr()) as *mut C;
         let clipboard_text = (*clipboard_ptr).get_paste_text();
         let (text_ptr, text_len) = (clipboard_text.as_ptr(), clipboard_text.len()); 
-        sys::nk_textedit_paste(text_edit, text_ptr as *const _, text_len as c_int);
+        nk_textedit_paste(text_edit, text_ptr as *const _, text_len as c_int);
     }
 
-    let copy_fn: unsafe extern fn(sys::nk_handle, *const c_char, c_int) = copy::<C>;
-    let paste_fn: unsafe extern fn(sys::nk_handle, *mut Struct_nk_text_edit) = paste::<C>;
+    let copy_fn: unsafe extern fn(nk_handle, *const c_char, c_int) = copy::<C>;
+    let paste_fn: unsafe extern fn(nk_handle, *mut Struct_nk_text_edit) = paste::<C>;
     let clipboard_data: *mut c_void = (clipboard as *mut C) as *mut _;
 
-    LifetimeMarked::from(sys::Struct_nk_clipboard {
+    LifetimeMarked::from(Struct_nk_clipboard {
         userdata: Handle::Ptr(clipboard_data).into(),
         copy: Some(copy_fn),
         paste: Some(paste_fn)
@@ -1171,13 +1170,13 @@ fn btoi(b: bool) -> c_int {
 }
 
 pub struct Input<'a> {
-    context: &'a mut sys::Struct_nk_context
+    context: &'a mut Struct_nk_context
 }
 
 impl<'a> Input<'a> {
-    fn new(context: &'a mut sys::Struct_nk_context) -> Self {
+    fn new(context: &'a mut Struct_nk_context) -> Self {
         unsafe {
-            sys::nk_input_begin(context);
+            nk_input_begin(context);
         }
 
         Input {
@@ -1187,25 +1186,25 @@ impl<'a> Input<'a> {
 
     pub fn motion(&mut self, x: i32, y: i32) {
         unsafe {
-            sys::nk_input_motion(self.context, x as c_int, y as c_int);
+            nk_input_motion(self.context, x as c_int, y as c_int);
         }
     }
 
     pub fn key(&mut self, key: Key, is_down: bool) {
         unsafe {
-            sys::nk_input_key(self.context, key.into(), btoi(is_down))
+            nk_input_key(self.context, key.into(), btoi(is_down))
         }
     }
 
     pub fn button(&mut self, button: Button, x: i32, y: i32, is_down: bool) {
         unsafe {
-            sys::nk_input_button(self.context, button.into(), x as c_int, y as c_int, btoi(is_down))
+            nk_input_button(self.context, button.into(), x as c_int, y as c_int, btoi(is_down))
         }
     }
 
     pub fn scroll(&mut self, y: f32) {
         unsafe {
-            sys::nk_input_scroll(self.context, y)
+            nk_input_scroll(self.context, y)
         }
     }
 
@@ -1217,7 +1216,7 @@ impl<'a> Input<'a> {
 impl<'a> Drop for Input<'a> {
     fn drop(&mut self) {
         unsafe {
-            sys::nk_input_end(self. context);
+            nk_input_end(self. context);
         }
     }
 }
