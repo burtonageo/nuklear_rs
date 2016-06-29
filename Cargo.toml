@@ -5,8 +5,14 @@ authors = ["George Burton <burtonageo@gmail.com>"]
 build = "build.rs"
 
 [dependencies]
-bindgen_plugin = { git = "https://github.com/crabtw/rust-bindgen.git", optional = true }
+bindgen_plugin = { version = "0.16", optional = true }
 bitflags = "0.6"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+cocoa = { version = "0.4", optional = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.2", optional = true }
 
 [dev-dependencies]
 glium = "0.14.0"
@@ -16,9 +22,10 @@ gcc = "0.3"
 
 [features]
 use_bindgen_plugin = []
-default = ["rust_allocator"]
+default = ["rust_allocator", "native_clipboard"]
 rust_allocator = []
 io = []
 malloc_allocator = []
+native_clipboard = ["cocoa", "winapi"]
 vertex_buffers = []
 font_baking = []

@@ -10,11 +10,24 @@ extern crate bindgen_plugin;
 #[macro_use]
 extern crate bitflags;
 
+#[cfg(all(target_os = "macos", feature = "native_clipboard"))]
+#[macro_use]
+extern crate cocoa;
+
+#[cfg(all(target_os = "windows", feature = "native_clipboard"))]
+extern crate winapi;
+
 #[cfg(feature = "rust_allocator")]
 mod rust_allocator;
 
 #[cfg(feature = "rust_allocator")]
 pub use rust_allocator::RustAllocator;
+
+#[cfg(feature = "native_clipboard")]
+mod native_clipboard;
+
+#[cfg(feature = "native_clipboard")]
+pub use native_clipboard::NativeClipboard;
 
 use std::error::Error;
 use std::ffi::CStr;
