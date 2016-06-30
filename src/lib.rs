@@ -556,7 +556,7 @@ impl Into<Struct_nk_scroll> for Scroll {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum Heading: Enum_nk_heading {
         Up => NK_UP,
         Down => NK_RIGHT,
@@ -566,7 +566,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum ButtonBehavior: Enum_nk_button_behavior {
         Default => NK_BUTTON_DEFAULT,
         Repeater => NK_BUTTON_REPEATER
@@ -574,7 +574,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum Modify: Enum_nk_modify {
         Fixed => NK_FIXED,
         Modifiable => NK_MODIFIABLE
@@ -582,7 +582,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum Orientation: Enum_nk_orientation {
         Vertical => NK_VERTICAL,
         Horizontal => NK_HORIZONTAL
@@ -590,7 +590,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum CollapseState: Enum_nk_collapse_states {
         Minimized => NK_MINIMIZED,
         Maximized => NK_MAXIMIZED
@@ -598,7 +598,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum ShowState: Enum_nk_show_states {
         Hidden => NK_HIDDEN,
         Shown => NK_SHOWN
@@ -606,7 +606,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum ChartType: Enum_nk_chart_type {
         Lines => NK_CHART_LINES,
         Column => NK_CHART_COLUMN,
@@ -615,7 +615,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum ChartEvent: Enum_nk_chart_event {
         Hovering => NK_CHART_HOVERING,
         Clicked => NK_CHART_CLICKED
@@ -623,7 +623,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum ColorFormat: Enum_nk_color_format {
         Rgb => NK_RGB,
         Rgba => NK_RGBA
@@ -631,7 +631,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum PopupType: Enum_nk_popup_type {
         Dynamic => NK_POPUP_DYNAMIC,
         Static => NK_POPUP_STATIC
@@ -639,7 +639,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum LayoutFormat: Enum_nk_layout_format {
         Dynamic => NK_DYNAMIC,
         Static => NK_STATIC
@@ -647,7 +647,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum TreeType: Enum_nk_tree_type {
         Node => NK_TREE_NODE,
         Tab => NK_TREE_TAB
@@ -655,7 +655,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum AntiAliasing: Enum_nk_anti_aliasing {
         Off => NK_ANTI_ALIASING_OFF,
         On => NK_ANTI_ALIASING_ON
@@ -752,7 +752,7 @@ impl Into<Struct_nk_convert_config> for ConvertConfig {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum SymbolType: Enum_nk_symbol_type {
         None => NK_SYMBOL_NONE,
         X => NK_SYMBOL_X,
@@ -772,7 +772,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum Key: Enum_nk_keys {
         None => NK_KEY_NONE,
         Shift => NK_KEY_SHIFT,
@@ -802,7 +802,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum Button: Enum_nk_buttons {
         Left => NK_BUTTON_LEFT,
         Middle => NK_BUTTON_MIDDLE,
@@ -812,7 +812,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum StyleColor: Enum_nk_style_colors {
         Text => NK_COLOR_TEXT,
         Window => NK_COLOR_WINDOW,
@@ -847,7 +847,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum WidgetLayoutState: Enum_nk_widget_layout_states {
         Invalid => NK_WIDGET_INVALID,
         Valid => NK_WIDGET_VALID,
@@ -856,7 +856,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum WidgetState: Enum_nk_widget_states {
         Inactive => NK_WIDGET_STATE_INACTIVE,
         Entered => NK_WIDGET_STATE_ENTERED,
@@ -878,7 +878,7 @@ convertible_flags! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum TextAlignment: Enum_nk_text_alignment {
         Left => NK_TEXT_LEFT,
         Centered => NK_TEXT_CENTERED,
@@ -904,7 +904,7 @@ convertible_flags! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum EditTypes: Enum_nk_edit_types {
         Simple => NK_EDIT_SIMPLE,
         Field => NK_EDIT_FIELD,
@@ -960,7 +960,7 @@ fn copy_to_nk_string(nk_string: &mut Struct_nk_str, string: &str) {
 pub struct MemoryStatus;
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum AllocationType: Enum_nk_allocation_type {
         Fixed => NK_BUFFER_FIXED,
         Dynamic => NK_BUFFER_DYNAMIC
@@ -968,7 +968,7 @@ convertible_enum! {
 }
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum BufferAllocationType: Enum_nk_buffer_allocation_type {
         Front => NK_BUFFER_FRONT,
         Back => NK_BUFFER_BACK,
@@ -1078,7 +1078,7 @@ pub struct TextUndoRecord;
 pub struct TextUndoState;
 
 convertible_enum! {
-    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     pub enum TextEditType: Enum_nk_text_edit_type {
         SingleLine => NK_TEXT_EDIT_SINGLE_LINE,
         MultiLine => NK_TEXT_EDIT_MULTI_LINE
