@@ -21,11 +21,11 @@ glium = "0.14.0"
 gcc = "0.3"
 
 [features]
-use_bindgen_plugin = []
 default = ["rust_allocator", "native_clipboard"]
-rust_allocator = []
+font_baking = []
 io = []
 malloc_allocator = []
 native_clipboard = ["cocoa", "winapi"]
+rust_allocator = []
+use_bindgen_plugin = []
 vertex_buffers = []
-font_baking = []
