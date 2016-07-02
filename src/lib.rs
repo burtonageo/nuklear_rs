@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "use_bindgen_plugin", feature(plugin))]
 #![cfg_attr(feature = "rust_allocator", feature(alloc, heap_api))]
+#![allow(dead_code, unused_variables)]
 
 #[cfg(feature = "rust_allocator")]
 extern crate alloc;
