@@ -28,7 +28,7 @@ mod mac_clipboard {
         fn get_paste_text(&self) -> &str {
             unsafe {
                 let text = NSPasteboard::stringForType(self.0, NSPasteboardTypeString);
-                CStr::from_ptr(text.UTF8String()).to_str().unwrap()
+                CStr::from_ptr(text.UTF8String()).to_str().unwrap_or("")
             }
         }
     }
