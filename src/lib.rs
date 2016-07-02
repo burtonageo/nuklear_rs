@@ -1055,6 +1055,7 @@ mod clipboard_tests {
     }
 
     #[test]
+    #[ignore]
     fn test_clipboard_paste() {
         use rust_allocator::RustAllocator;
 
