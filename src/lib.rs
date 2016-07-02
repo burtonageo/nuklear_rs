@@ -11,8 +11,11 @@ extern crate bindgen_plugin;
 extern crate bitflags;
 
 #[cfg(all(target_os = "macos", feature = "native_clipboard"))]
-#[macro_use]
 extern crate cocoa;
+
+#[cfg(all(target_os = "macos", feature = "native_clipboard"))]
+#[macro_use]
+extern crate objc;
 
 #[cfg(all(target_os = "windows", feature = "native_clipboard"))]
 extern crate winapi;
@@ -477,6 +480,7 @@ impl Into<nk_handle> for Handle {
 #[cfg(test)]
 mod handle_tests {
     use super::*;
+    use sys::nk_handle;
 
     #[test]
     fn test_handle_ptr_conversion() {
