@@ -1215,7 +1215,9 @@ impl<'a> Input<'a> {
     }
 
     pub fn char(&mut self, ch: char) {
-        unimplemented!();
+        unsafe {
+            nk_input_unicode(self.context, ch as nk_rune)
+        }
     }
 }
 
