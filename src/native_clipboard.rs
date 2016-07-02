@@ -1,6 +1,6 @@
 #[cfg(target_os = "macos")]
 mod mac_clipboard {
-    use cocoa::appkit::{NSPasteboard, NSPasteboardItem, NSPasteboardTypeString};
+    use cocoa::appkit::{NSPasteboard, NSPasteboardTypeString};
     use cocoa::base::{id, nil};
     use cocoa::foundation::{NSArray, NSString};
     use std::ffi::CStr;
