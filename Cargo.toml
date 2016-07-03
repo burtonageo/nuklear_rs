@@ -14,6 +14,7 @@ objc = { version = "0.2", optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.2", optional = true }
+user32 = { git = "https://github.com/alexchandel/user32-sys", optional = true }
 
 [dev-dependencies]
 glium = "0.14.0"
@@ -26,7 +27,7 @@ default = ["rust_allocator", "native_clipboard"]
 font_baking = []
 io = []
 malloc_allocator = []
-native_clipboard = ["cocoa", "objc", "winapi"]
+native_clipboard = ["cocoa", "objc", "winapi", "user32"]
 rust_allocator = []
 use_bindgen_plugin = []
 vertex_buffers = []
