@@ -16,6 +16,9 @@ winapi = { version = "0.2", optional = true }
 user32-sys = { version = "0.2", optional = true }
 kernel32-sys = { version = "0.2", optional = true }
 
+[target.'cfg(any(target_os = "linux", target_os = "freebsd", target_os="dragonfly", target_os="openbsd"))'.dependencies]
+x11-dl = { version = "2.6", optional = true }
+
 [dev-dependencies]
 glium = "0.14.0"
 
@@ -27,7 +30,7 @@ default = ["rust_allocator", "native_clipboard"]
 font_baking = []
 io = []
 malloc_allocator = []
-native_clipboard = ["cocoa", "winapi", "kernel32-sys", "user32-sys"]
+native_clipboard = ["cocoa", "winapi", "kernel32-sys", "user32-sys", "x11-dl"]
 rust_allocator = []
 use_bindgen_plugin = []
 vertex_buffers = []
