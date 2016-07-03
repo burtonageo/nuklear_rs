@@ -94,7 +94,14 @@ mod native_clipboard_tests {
     fn test_native_clipboard() {
         const TEST_TEXT: &'static str = "BoomShakalaka";
         let mut clipboard = NativeClipboard::default();
+
+        // Save the current clipboard text
+        let current_clipboard_text = clipboard.get_paste_text().to_string();
+
         clipboard.copy(TEST_TEXT);
         assert_eq!(clipboard.get_paste_text(), TEST_TEXT);
+
+        // And restore the clipboard to its previous state after the test
+        clipboard.copy(&current_clipboard_text);
     }
 }
