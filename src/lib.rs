@@ -14,10 +14,6 @@ extern crate bitflags;
 #[cfg(all(target_os = "macos", feature = "native_clipboard"))]
 extern crate cocoa;
 
-#[cfg(all(target_os = "macos", feature = "native_clipboard"))]
-#[macro_use]
-extern crate objc;
-
 #[cfg(all(target_os = "windows", feature = "native_clipboard"))]
 extern crate winapi;
 
