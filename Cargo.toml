@@ -13,7 +13,7 @@ cocoa = { git = "https://github.com/burtonageo/cocoa-rs", optional = true }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 winapi = { version = "0.2", optional = true }
-user32-sys = { git = "https://github.com/alexchandel/user32-sys", optional = true }
+user32-sys = { version = "0.2", optional = true }
 kernel32-sys = { version = "0.2", optional = true }
 
 [dev-dependencies]
