@@ -20,6 +20,9 @@ extern crate winapi;
 #[cfg(all(target_os = "windows", feature = "native_clipboard"))]
 extern crate user32;
 
+#[cfg(all(target_os = "windows", feature = "native_clipboard"))]
+extern crate kernel32;
+
 #[cfg(feature = "rust_allocator")]
 mod rust_allocator;
 
