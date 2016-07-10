@@ -126,17 +126,19 @@ mod windows_clipboard {
     }
 }
 
-#[cfg(not(any(target_os = "windows", target_os = "macos")))]
-mod other_unix_clipboard {
-    pub struct OtherUnixClipboard;
+#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "openbsd"))]
+mod unix_clipboard {
+    use x11_dl::Atom;
 
-    impl Default for OtherUnixClipboard {
+    pub struct UnixClipboard;
+
+    impl Default for UnixClipboard {
         fn default() -> Self {
             unimplemented!();
         }
     }
 
-    impl ::Clipboard for OtherUnixClipboard {
+    impl ::Clipboard for UnixClipboard {
         fn copy(&mut self, text: &str) {
             unimplemented!();
         }
@@ -152,6 +154,9 @@ pub type NativeClipboard = mac_clipboard::CocoaClipboard;
 
 #[cfg(target_os = "windows")]
 pub type NativeClipboard = windows_clipboard::WindowsClipboard;
+
+#[cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "openbsd"))]
+pub type NativeClipboard = unix_clipboard::UnixClipboard;
 
 #[cfg(all(test, any(target_os = "macos", target_os = "windows")))]
 mod native_clipboard_tests {

@@ -10,7 +10,7 @@ extern crate alloc;
 extern crate bindgen_plugin;
 #[macro_use]
 extern crate bitflags;
-
+/*
 #[cfg(all(target_os = "macos", feature = "native_clipboard"))]
 extern crate cocoa;
 
@@ -25,19 +25,19 @@ extern crate kernel32;
 
 #[cfg(any(target_os = "linux", target_os = "freebsd", target_os="dragonfly", target_os="openbsd"))]
 extern crate x11_dl;
-
+*/
 #[cfg(feature = "rust_allocator")]
 mod rust_allocator;
 
 #[cfg(feature = "rust_allocator")]
 pub use rust_allocator::RustAllocator;
-
+/*
 #[cfg(feature = "native_clipboard")]
 mod native_clipboard;
 
 #[cfg(feature = "native_clipboard")]
 pub use native_clipboard::NativeClipboard;
-
+*/
 use std::error::Error;
 use std::ffi::CStr;
 use std::fmt;
