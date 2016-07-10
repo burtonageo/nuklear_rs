@@ -2259,3 +2259,8 @@ impl Keyboard {
         str::from_utf8(bytes).unwrap()
     }
 }
+
+#[cfg(feature = "vertex_buffers")]
+mod vertex_buffers {
+    pub struct Vertex(Struct_nk_draw_vertex);
+}
