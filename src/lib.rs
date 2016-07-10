@@ -217,6 +217,18 @@ impl Into<bool> for Enum_Unnamed1 {
     }
 }
 
+impl Into<u32> for Enum_Unnamed1 {
+    fn into(self) -> u32 {
+        self as u32
+    }
+}
+
+impl Into<i32> for Enum_Unnamed1 {
+    fn into(self) -> i32 {
+        (self as u32) as i32
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Color {
     pub r: u8,
@@ -784,7 +796,7 @@ convertible_enum! {
 
 convertible_enum! {
     #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-    pub enum Key: Enum_nk_keys {
+    pub enum Keys: Enum_nk_keys {
         None => NK_KEY_NONE,
         Shift => NK_KEY_SHIFT,
         Ctrl => NK_KEY_CTRL,
@@ -814,7 +826,7 @@ convertible_enum! {
 
 convertible_enum! {
     #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-    pub enum Button: Enum_nk_buttons {
+    pub enum Buttons: Enum_nk_buttons {
         Left => NK_BUTTON_LEFT,
         Middle => NK_BUTTON_MIDDLE,
         Right => NK_BUTTON_RIGHT,
@@ -1202,13 +1214,13 @@ impl<'a> InputContext<'a> {
         }
     }
 
-    pub fn key(&mut self, key: Key, is_down: bool) {
+    pub fn key(&mut self, key: Keys, is_down: bool) {
         unsafe {
             nk_input_key(self.context, key.into(), btoi(is_down))
         }
     }
 
-    pub fn button(&mut self, button: Button, x: i32, y: i32, is_down: bool) {
+    pub fn button(&mut self, button: Buttons, x: i32, y: i32, is_down: bool) {
         unsafe {
             nk_input_button(self.context, button.into(), x as c_int, y as c_int, btoi(is_down))
         }
@@ -2165,5 +2177,85 @@ impl CommandBuffer {
             nk_draw_text(&mut self.0, bounds.into(), text.as_ptr() as *const i8, text.len() as i32, &font.to_raw_font(),
                          background_color.into(), foreground_color.into())
         }
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct MouseButton(Struct_nk_mouse_button);
+
+impl MouseButton {
+    pub fn is_down(&self) -> bool {
+        self.0.down == Enum_Unnamed1::nk_true.into()
+    }
+
+    pub fn is_clicked(&self) -> bool {
+        self.0.clicked == Enum_Unnamed1::nk_true.into()
+    }
+
+    pub fn click_position(&self) -> Vec2 {
+        self.0.clicked_pos.into()
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Mouse(Struct_nk_mouse);
+
+impl Mouse {
+    pub fn get_button(&self, button: Buttons) -> Option<MouseButton> {
+        if button == Buttons::Max {
+            None
+        } else {
+            Some(MouseButton(self.0.buttons[button as u32 as usize]))
+        }
+    }
+
+    pub fn position(&self) -> Vec2 {
+        self.0.pos.into()
+    }
+
+    pub fn previous_position(&self) -> Vec2 {
+        self.0.prev.into()
+    }
+
+    pub fn delta(&self) -> Vec2 {
+        self.0.delta.into()
+    }
+
+    pub fn scroll_delta(&self) -> f32 {
+        self.0.scroll_delta
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Key(Struct_nk_key);
+
+impl Key {
+    pub fn is_down(&self) -> bool {
+        self.0.down == Enum_Unnamed1::nk_true.into()
+    }
+
+    pub fn is_clicked(&self) -> bool {
+        self.0.clicked == Enum_Unnamed1::nk_true.into()
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct Keyboard(Struct_nk_keyboard);
+
+impl Keyboard {
+    pub fn get_key(&self, key: Keys) -> Option<Key> {
+        if key == Keys::Max {
+            None
+        } else {
+            Some(Key(self.0.keys[key as u32 as usize]))
+        }
+    }
+
+    pub fn text(&self) -> &str {
+        use std::{slice, str};
+        let bytes: &[u8] = unsafe {
+            slice::from_raw_parts(self.0.text.as_ptr() as *const u8, self.0.text_len as usize)
+        };
+        str::from_utf8(bytes).unwrap()
     }
 }
