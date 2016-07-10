@@ -1181,11 +1181,11 @@ fn btoi(b: bool) -> c_int {
     if b { 1 } else { 0 }
 }
 
-pub struct Input<'a> {
+pub struct InputContext<'a> {
     context: &'a mut Struct_nk_context
 }
 
-impl<'a> Input<'a> {
+impl<'a> InputContext<'a> {
     fn new(context: &'a mut Struct_nk_context) -> Self {
         unsafe {
             nk_input_begin(context);
@@ -1227,10 +1227,10 @@ impl<'a> Input<'a> {
     }
 }
 
-impl<'a> Drop for Input<'a> {
+impl<'a> Drop for InputContext<'a> {
     fn drop(&mut self) {
         unsafe {
-            nk_input_end(self. context);
+            nk_input_end(self.context);
         }
     }
 }
@@ -2045,6 +2045,17 @@ convertible_enum! {
 pub struct CommandBuffer(Struct_nk_command_buffer);
 
 impl CommandBuffer {
+    pub fn new<A, C>(context: Context<A, C>, panel: &mut Panel, title: &str, bounds: Rect) -> Result<Self, ()>
+        where A: Allocator, C: Clipboard {
+        Struct_nk_command_buffer command_buffer;
+        let rv = nk_begin(command_buffer, panel, title.as_ptr() as *const c_char, bounds.into());
+        if rv == Enum_Unnamed1::nk_false as u32 {
+            Err(())
+        } else {
+            Ok(CommandBuffer(command_buffer))
+        }
+    }
+
     pub fn stroke_line(&mut self, p0: Vec2, p1: Vec2, line_thickness: f32, color: Color) {
         unsafe {
             nk_stroke_line(&mut self.0, p0.x, p0.y, p1.x, p1.y, line_thickness, color.into());
