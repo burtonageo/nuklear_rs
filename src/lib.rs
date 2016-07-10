@@ -342,6 +342,7 @@ impl Into<Struct_nk_color> for Color {
     }
 }
 
+#[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vec2 {
     pub x: f32,
@@ -2029,6 +2030,125 @@ impl From<Struct_nk_command> for CommandHeader {
         CommandHeader {
             command_type: From::from(command._type),
             next: command.next as usize
+        }
+    }
+}
+
+convertible_enum! {
+    #[derive(Clone, Copy , Debug, Eq, PartialEq)]
+    pub enum CommandClipping: Enum_nk_command_clipping {
+        On => NK_CLIPPING_ON,
+        Off => NK_CLIPPING_OFF
+    }
+}
+
+pub struct CommandBuffer(Struct_nk_command_buffer);
+
+impl CommandBuffer {
+    pub fn stroke_line(&mut self, p0: Vec2, p1: Vec2, line_thickness: f32, color: Color) {
+        unsafe {
+            nk_stroke_line(&mut self.0, p0.x, p0.y, p1.x, p1.y, line_thickness, color.into());
+        }
+    }
+
+    pub fn stroke_curve(&mut self, a: Vec2, ctrl0: Vec2, ctrl1: Vec2, b: Vec2, line_thickness: f32, color: Color) {
+        unsafe {
+            nk_stroke_curve(&mut self.0, a.x, a.y, ctrl0.x, ctrl0.y, ctrl1.x, ctrl1.y, b.x, b.y, line_thickness,
+                            color.into())
+        }
+    }
+
+    pub fn stroke_rect(&mut self, rect: Rect, rounding: f32, line_thickness: f32, color: Color) {
+        unsafe {
+            nk_stroke_rect(&mut self.0, rect.into(), rounding, line_thickness, color.into())
+        }
+    }
+
+    pub fn stroke_circle(&mut self, bounds: Rect, line_thickness: f32, color: Color) {
+        unsafe {
+            nk_stroke_circle(&mut self.0, bounds.into(), line_thickness, color.into())
+        }
+    }
+
+    pub fn stroke_arc(&mut self, pc: Vec2, radius: f32, a_min: f32, a_max: f32, line_thickness: f32, color: Color) {
+        unsafe {
+            nk_stroke_arc(&mut self.0, pc.x, pc.y, radius, a_min, a_max, line_thickness, color.into())
+        }
+    }
+
+    pub fn stroke_triangle(&mut self, p0: Vec2, p1: Vec2, p2: Vec2, line_thickness: f32, color: Color) {
+        unsafe {
+           nk_stroke_triangle (&mut self.0, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, line_thickness, color.into())
+        }
+    }
+
+    pub fn stroke_polyline(&mut self, points: &[Vec2], line_thickness: f32, color: Color) {
+        unsafe {
+            nk_stroke_polyline(&mut self.0, points.as_ptr() as *mut c_float, points.len() as i32,
+                               line_thickness, color.into())
+        }
+    }
+
+    pub fn stroke_polygon(&mut self, points: &[Vec2], line_thickness: f32, color: Color) {
+        unsafe {
+            nk_stroke_polygon(&mut self.0, points.as_ptr() as *mut c_float, points.len() as i32,
+                              line_thickness, color.into())
+        }
+    }
+
+    pub fn fill_rect(&mut self, rect: Rect, rounding: f32, color: Color) {
+        unsafe {
+            nk_fill_rect(&mut self.0, rect.into(), rounding, color.into())
+        }
+    }
+
+    pub fn fill_rect_multicolor(&mut self, rect: Rect, left: Color, top: Color, right: Color, bottom: Color) {
+        unsafe {
+            nk_fill_rect_multi_color(&mut self.0, rect.into(), left.into(), top.into(), right.into(), bottom.into())
+        }
+    }
+
+    pub fn fill_circle(&mut self, bounds: Rect, color: Color) {
+        unsafe {
+            nk_fill_circle(&mut self.0, bounds.into(), color.into())
+        }
+    }
+
+    pub fn fill_arc(&mut self, orig: Vec2, radius: f32, a_min: f32, a_max: f32, color: Color) {
+        unsafe {
+            nk_fill_arc(&mut self.0, orig.x, orig.y, radius, a_min, a_max, color.into())
+        }
+    }
+
+    pub fn fill_triangle(&mut self, p0: Vec2, p1: Vec2, p2: Vec2, color: Color) {
+        unsafe {
+            nk_fill_triangle(&mut self.0, p0.x, p0.y, p1.x, p1.y, p2.x, p2.y, color.into())
+        }
+    }
+
+    pub fn fill_polygon(&mut self, points: &[Vec2], color: Color) {
+        unsafe {
+            nk_fill_polygon(&mut self.0, points.as_ptr() as *mut c_float, points.len() as i32, color.into())
+        }
+    }
+
+    pub fn push_scissor(&mut self, rect: Rect) {
+        unsafe {
+            nk_push_scissor(&mut self.0, rect.into())
+        }
+    }
+
+    pub fn draw_image(&mut self, rect: Rect, image: Image) {
+        unsafe {
+            nk_draw_image(&mut self.0, rect.into(), &mut image.to_nk_image())
+        }
+    }
+
+    pub fn draw_text(&mut self, bounds: Rect, text: &str, font: &Font<&'static fn(Handle, f32, &str) -> f32>,
+                     background_color: Color, foreground_color: Color) {
+        unsafe {
+            nk_draw_text(&mut self.0, bounds.into(), text.as_ptr() as *const i8, text.len() as i32, &font.to_raw_font(),
+                         background_color.into(), foreground_color.into())
         }
     }
 }
