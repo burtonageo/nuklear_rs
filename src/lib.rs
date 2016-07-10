@@ -1191,7 +1191,7 @@ impl<'a> InputContext<'a> {
             nk_input_begin(context);
         }
 
-        Input {
+        InputContext {
             context: context
         }
     }
@@ -1242,8 +1242,8 @@ pub struct Context<A: Allocator, C: Clipboard> {
 }
 
 impl<A: Allocator, C: Clipboard> Context<A, C> {
-    pub fn input(&mut self) -> Input {
-        unimplemented!();
+    pub fn input(&mut self) -> InputContext {
+        InputContext::new(&mut self.raw)
     }
 }
 
@@ -2045,11 +2045,15 @@ convertible_enum! {
 pub struct CommandBuffer(Struct_nk_command_buffer);
 
 impl CommandBuffer {
-    pub fn new<A, C>(context: Context<A, C>, panel: &mut Panel, title: &str, bounds: Rect) -> Result<Self, ()>
+    pub fn new<A, C>(context: &mut Context<A, C>, title: &str, bounds: Rect) -> Result<Self, ()>
         where A: Allocator, C: Clipboard {
-        Struct_nk_command_buffer command_buffer;
-        let rv = nk_begin(command_buffer, panel, title.as_ptr() as *const c_char, bounds.into());
-        if rv == Enum_Unnamed1::nk_false as u32 {
+        let command_buffer: Struct_nk_command_buffer = Default::default();
+        let mut panel = Default::default();
+        let flags = 0; // TODO(burtonageo): pass as fn param
+        let rv = unsafe {
+            nk_begin(&mut context.raw, &mut panel, title.as_ptr() as *const c_char, bounds.into(), flags)
+        };
+        if rv == Enum_Unnamed1::nk_false as i32 {
             Err(())
         } else {
             Ok(CommandBuffer(command_buffer))
